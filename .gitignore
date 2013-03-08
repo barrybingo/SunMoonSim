@@ -11,7 +11,14 @@
 *.so.*
 *.dylib
 
+# temp output
+*.map
+*.lst
+*.d
+
 # Executables
 *.exe
 *.out
 *.app
+*.hex
+*.elf

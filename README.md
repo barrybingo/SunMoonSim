@@ -15,6 +15,17 @@ Power cycle the unit to calibrate the screen.
 Build instructions
 -------------------
 
+Built using 
+Code Sourcery Lite 
+
+Tested on version Sourcery CodeBench Lite 2011.09-69 for Linux AMD64
+
+Build makefiles in Debug and Release folders
+
+    cd Debug && make 
+    cd Release && make SunMoonOnSTM32.hex
+
+Includes Eclipse project file for that IDE feeling.  In fact the makefiles are created by Eclipse.
 
 Eclipse plugins:
 
@@ -27,7 +38,6 @@ GNU ARM Dev repo from http://gnuarmeclipse.sourceforge.net/updates
 
 -  GNU ARM C/C++ Development Support
 
-Code Sourcery Lite tested on version Sourcery CodeBench Lite 2011.09-69 for Linux AMD64
 
 Check out this [helpful guide](https://sites.google.com/site/stm32discovery/) for building and debugging STM using eclipse, gdb and codesourcery
 
@@ -69,10 +79,4 @@ Then test the debugging within GDB:
     monitor reset
     continue
     .....
-
-
-
-
-
-
 
