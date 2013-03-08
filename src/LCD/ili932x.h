@@ -1,6 +1,8 @@
 #ifndef  __ILI932X_H
 #define  __ILI932X_H
 
+#include "RGB.h"
+
 #define LCD_W 240
 #define LCD_H 320
 
@@ -122,6 +124,9 @@
 #define R192           0xC0
 #define R193           0xC1
 #define R229           0xE5	
+
+extern uint16_t  POINT_COLOR; //Ĭ�Ϻ�ɫ
+extern uint16_t  BACK_COLOR;  //������ɫ.Ĭ��Ϊ��ɫ
 
 /* �������� */
 void LCD_WriteRAM_Prepare(void);

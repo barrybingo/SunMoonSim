@@ -153,6 +153,16 @@ uint32_t GetMsTicks()
 	return msTicks;
 }
 
+/**
+ * @brief  Delays execution for specified time
+ * @param  ms: milliseconds
+ * @retval None
+ */
+void Delay(uint32_t ms) {
+	uint32_t now = GetMsTicks();
+	while ((GetMsTicks() - now) < ms)
+		;
+}
 
 /******************************************************************************/
 /*                 STM32F10x Peripherals Interrupt Handlers                   */
