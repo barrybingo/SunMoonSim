@@ -9,6 +9,10 @@
 #include "stm32f10x_conf.h"
 #include "stm32f10x_it.h"
 #include "led.h"
+#include "pwm.h"
+#include "ili932x.h"
+#include "RGB.h"
+
 
 /* some basic compiler checks */
 #if !defined (USE_STDPERIPH_DRIVER)  || !defined (STM32F10X_MD)
@@ -33,19 +37,31 @@ void delay_ms(uint32_t ms) {
  * @retval None
  */
 int main(void) {
+	unsigned int brightness = 0;
+
 	/* initialisation code */
-	SysTick_Config(SystemCoreClock / 1000);
+	SystemInit();	   		//72MHzclock, PLL and Flash configuration
+	while(SysTick_Config(SystemCoreClock / 1000));
+
+	/* init LCD */
+	LCD_Init();
+	LCD_Clear(WHITE);
+	WriteString(10,40,"Touch here for brightness",BLUE);
+	WriteString(10,280,"or here for dull days",BLUE);
+
+	/* init LEDs */
 	LEDInit(LED1);
-	LEDInit(LED2);
+	pwm_init();
 
 	/* Infinite loop */
-	while (1) {
-		delay_ms(100);
-		LEDToggle(LED1);
+	while (1)
+	{
 		delay_ms(50);
 		LEDToggle(LED1);
-		delay_ms(50);
-		LEDToggle(LED2);
+
+		if (brightness > MAX_LED_BRIGHTNESS)
+			brightness = 0;
+		pwm_set(brightness++);
 	}
 }
 
