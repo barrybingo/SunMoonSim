@@ -80,3 +80,12 @@ Then test the debugging within GDB:
     continue
     .....
 
+
+Once everything is set up the whole build and debug will look like this:
+
+    cd Debug
+    make SunMoonOnSTM32.elf
+    arm-none-eabi-gdb
+
+Debug/.gdbinit contains the GDB initialisation commands
+
