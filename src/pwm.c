@@ -1,57 +1,80 @@
 #include "stm32f10x_conf.h"
+#include "pwm.h"
 
-
-static TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
-static TIM_OCInitTypeDef  TIM_OCInitStructure;
-#define ARR  12000
-
-void pwm_init_PB9(void)
+void PWM_Init_Output(PWM_Output* output)
 {
-    /* for old version */
+
     GPIO_InitTypeDef GPIO_InitStructure;
 
-    /* new version: use pwm in PB9 TIM4_CH4 */
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB,ENABLE);
-    /* TIM4 clock enable */
-    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE);
+    RCC_APB2PeriphClockCmd(output->RCC_APB2Periph, ENABLE);
+    RCC_APB1PeriphClockCmd(output->RCC_APB1Periph, ENABLE);
 
     /* GPIOB Configuration:TIM4 Channel4 as alternate function push-pull */
-    GPIO_InitStructure.GPIO_Pin   =  GPIO_Pin_9;//GPIO_Pin_8 |
+    GPIO_InitStructure.GPIO_Pin   =  output->GPIO_Pin;
     GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_AF_PP;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
-    GPIO_Init(GPIOB, &GPIO_InitStructure);
+    GPIO_Init(output->GPIO_PORT, &GPIO_InitStructure);
 
     /* Time base configuration */
-    TIM_TimeBaseStructure.TIM_Period = ARR;//12000
-    TIM_TimeBaseStructure.TIM_Prescaler = 2;//Ô¤·ÖÆµ2,ÆµÂÊ36M
-    TIM_TimeBaseStructure.TIM_ClockDivision = 0;
-    TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
-    TIM_TimeBaseInit(TIM4, &TIM_TimeBaseStructure);
+    output->TIM_TimeBaseStructure.TIM_Period = output->TIM_Period;
+    output->TIM_TimeBaseStructure.TIM_Prescaler = 2;//Ô¤·ÖÆµ2,ÆµÂÊ36M
+    output->TIM_TimeBaseStructure.TIM_ClockDivision = 0;
+    output->TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
+    TIM_TimeBaseInit(output->GPIO_TIM, &output->TIM_TimeBaseStructure);
 
     /* PWM1 Mode configuration: Channel1 */
-    TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
-    TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
-    /* PWM1 Mode configuration: Channel4 */
-    TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-    TIM_OCInitStructure.TIM_Pulse = (ARR/100)*50; /* ÉèÖÃ³õÊ¼±³¹âÁÁ¶È */
-    TIM_OC4Init(TIM4, &TIM_OCInitStructure);
+    output->TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
+    output->TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
+    /* PWM1 Mode configuration: ChannelX */
+    output->TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
+    output->TIM_OCInitStructure.TIM_Pulse = (output->TIM_Period/100)*50;
 
-    TIM_OC4PreloadConfig(TIM4, TIM_OCPreload_Enable);
-    TIM_ARRPreloadConfig(TIM4, ENABLE);
-    /* TIM4 enable counter */
-    TIM_Cmd(TIM4, ENABLE);
+    switch( output->Channel )
+    {
+        case 1:
+            TIM_OC1Init(output->GPIO_TIM, &output->TIM_OCInitStructure);
+            TIM_OC1PreloadConfig(output->GPIO_TIM, TIM_OCPreload_Enable);
+        	break;
+        case 2:
+            TIM_OC2Init(output->GPIO_TIM, &output->TIM_OCInitStructure);
+            TIM_OC2PreloadConfig(output->GPIO_TIM, TIM_OCPreload_Enable);
+        	break;
+        case 3:
+            TIM_OC3Init(output->GPIO_TIM, &output->TIM_OCInitStructure);
+            TIM_OC3PreloadConfig(output->GPIO_TIM, TIM_OCPreload_Enable);
+        	break;
+        case 4:
+            TIM_OC4Init(output->GPIO_TIM, &output->TIM_OCInitStructure);
+            TIM_OC4PreloadConfig(output->GPIO_TIM, TIM_OCPreload_Enable);
+        	break;
+    }
+
+    TIM_ARRPreloadConfig(output->GPIO_TIM, ENABLE);
+    /* output->GPIO_TIM enable counter */
+    TIM_Cmd(output->GPIO_TIM, ENABLE);
 }
 
-void pwm_set(unsigned int value)
+void PWM_Set_Output(PWM_Output* output, uint16_t value)
 {
-    if(value>100)value=50;
-    TIM_OCInitStructure.TIM_Pulse = (ARR/100)*value;
-    TIM_OC4Init(TIM4, &TIM_OCInitStructure);
+    output->TIM_OCInitStructure.TIM_Pulse = (output->TIM_Period/100)*value;
+
+    switch( output->Channel )
+    {
+        case 1:
+        	TIM_OC3Init(output->GPIO_TIM, &output->TIM_OCInitStructure);
+        	break;
+        case 2:
+        	TIM_OC3Init(output->GPIO_TIM, &output->TIM_OCInitStructure);
+        	break;
+        case 3:
+        	TIM_OC3Init(output->GPIO_TIM, &output->TIM_OCInitStructure);
+        	break;
+        case 4:
+        	TIM_OC4Init(output->GPIO_TIM, &output->TIM_OCInitStructure);
+        	break;
+    }
 }
 
 
-void pwm_init(void)
-{
-	pwm_init_PB9();
-	pwm_set(25);
-}
+
+

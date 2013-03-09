@@ -1,10 +1,24 @@
 #ifndef __LCD_HW_H__
 #define __LCD_HW_H__
 
-#define MAX_LED_BRIGHTNESS 100
+typedef struct
+{
+	/* user defined */
+	TIM_TypeDef*  GPIO_TIM;
+	uint8_t		  Channel;
+	uint32_t      RCC_APB1Periph;
+	uint32_t      RCC_APB2Periph;
+	uint16_t      GPIO_Pin;
+	GPIO_TypeDef* GPIO_PORT;
+	uint16_t      TIM_Period;
 
-void pwm_init(void);
-void pwm_set(unsigned int value);
+	/* internal usage */
+	TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
+	TIM_OCInitTypeDef TIM_OCInitStructure;
+} PWM_Output;
+
+void PWM_Init_Output(PWM_Output* output);
+void PWM_Set_Output(PWM_Output* output, uint16_t value);
 
 #endif
 

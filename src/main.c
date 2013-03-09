@@ -9,7 +9,8 @@
 #include "stm32f10x_conf.h"
 #include "stm32f10x_it.h"
 #include "led.h"
-#include "pwm.h"
+#include "key.h"
+#include "sun_moon.h"
 #include "ili932x.h"
 #include "touch.h"
 #include "hardware.h"
@@ -33,14 +34,60 @@ void NVIC_Configuration(void)
 	#endif
 
 	/* Configure one bit for preemption priority */
-	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);	   // �����ж��� Ϊ2
+	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
 
 	/* Enable the EXTI15_10_IRQn Interrupt */
-	NVIC_InitStructure.NVIC_IRQChannel = EXTI15_10_IRQn;	// �����ж���4
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2; // ����ռ�����ȼ�Ϊ2
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;		  // ���ø����ȼ�Ϊ0
-	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;			  // ʹ���ж���4
-	NVIC_Init(&NVIC_InitStructure);							  // ��ʼ���ж���4
+	NVIC_InitStructure.NVIC_IRQChannel = EXTI15_10_IRQn;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_Init(&NVIC_InitStructure);
+}
+
+/**
+  * @brief  Read on-board key button states
+  *         Note if KEY one is pressed and held then KEY_Scan will only return 1 for the first call.
+  *         All keys have to be released before a new key press will be returned by KEY_Scan.
+  * @param  None
+  * @retval 0: No keys are pressed
+  * 		1: if KEY1 is pressed and was not pressed on last call
+  * 		2: if KEY2 is pressed and was not pressed on last call
+  */
+uint8_t KEY_Scan(void)
+{
+	static uint8_t NONE_PRESSED=1; // 1 if all keys are released; 0 otherwise
+
+	if(NONE_PRESSED && (KeyState(KEY1)==KEY_PRESSED || KeyState(KEY2)==KEY_PRESSED))
+	{
+		Delay(10); // small debounce delay for them rattling switches and glitches
+		if(KeyState(KEY1)==KEY_PRESSED==0)
+		{
+			NONE_PRESSED=0;
+			return 1;
+		}
+		else if(KeyState(KEY2)==KEY_PRESSED==0)
+		{
+			NONE_PRESSED=0;
+			return 2;
+		}
+
+		return 0;  // a glitch
+	}
+	else if(KeyState(KEY1)==KEY_RELEASED && KeyState(KEY2)==KEY_RELEASED)
+		NONE_PRESSED=1;
+	return 0;
+}
+
+void Clear_Screen()
+{
+	POINT_COLOR=BLUE;
+	BACK_COLOR =WHITE;
+	LCD_Clear(WHITE);
+	WriteString(20,40,"Touch here for brightness",RED);
+	WriteString(20,280," or here for dull days",RED);
+
+	WriteString(50,135,"KEY1=Calibrate screen",BLUE);
+	WriteString(50,155,"KEY2=Clear screen",BLUE);
 }
 
 /**
@@ -49,9 +96,11 @@ void NVIC_Configuration(void)
  * @retval None
  */
 int main(void) {
-	unsigned int brightness = 0;
+	/* local variables */
+	uint16_t brightness = 0;
+	uint8_t keyscan = 0;
 
-	/* initialisation code */
+	/* set clocks ticking correctly */
 	SystemInit();	   		//72MHzclock, PLL and Flash configuration
 	while(SysTick_Config(SystemCoreClock / 1000));
 
@@ -65,20 +114,34 @@ int main(void) {
 	/* touch screen */
 	Touch_Init();
 
+	Clear_Screen();
 
-	WriteString(10,40,"Touch here for brightness",BLUE);
-	WriteString(10,280,"or here for dull days",BLUE);
+	/* on board key buttons */
+	KeyInit(KEY1);
+	KeyInit(KEY2);
 
-	/* init LEDs */
+	/* on board LEDs */
 	LEDInit(LED1);
 	LEDInit(LED2);
 	LEDToggle(LED1);
 
-	pwm_init();
+	/* the stellar bodies */
+	Sun_Moon_Init();
 
 	/* Infinite loop */
 	while (1)
 	{
+		/* check on board button states */
+		keyscan = KEY_Scan();
+		if (keyscan==1)
+		{
+		    Touch_Adjust();
+		}
+		else if (keyscan==2)
+		{
+			Clear_Screen();
+		}
+
 		/* is screen being touched? */
 		if(Pen_Point.Key_Sta==Key_Down)
 		{
@@ -95,14 +158,12 @@ int main(void) {
 				/* draw on the LCD like a pencil */
 				Draw_Big_Point(Pen_Point.X0,Pen_Point.Y0);
 
-				/* some diagnostic info */
-				LCD_ShowNum(10,10,Pen_Point.X,5,16);
-				LCD_ShowNum(100,10,Pen_Point.Y,5,16);
-				LCD_ShowNum(10,100,Pen_Point.X0,5,16);
-				LCD_ShowNum(100,100,Pen_Point.Y0,5,16);
+				/* shine the sun and moon */
+				brightness = (Pen_Point.Y0 / (float)LCD_H) * (float)MAX_SUN_MOON_BRIGHTNESS;
+				LCD_ShowNum(100,10,brightness,5,16);
 
-				/* set dimmer */
-				pwm_set((Pen_Point.Y0 / (float)LCD_H) * (float)MAX_LED_BRIGHTNESS);
+				Set_Sun_Brightness(brightness);
+				Set_Moon_Brightness(MAX_SUN_MOON_BRIGHTNESS - brightness);
 			}while(PEN==0);
 
 			Pen_Int_Set(1); // turn interrupt back on

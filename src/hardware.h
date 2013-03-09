@@ -1,3 +1,8 @@
+/**************************************************************************
+ * Gives a simple means to set binary output high/low and read high/low binary inputs
+ * by using memory mapped addresses
+ */
+
 #ifndef __HARDWARE_H
 #define __HARDWARE_H	 
 
