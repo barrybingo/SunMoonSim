@@ -1,6 +1,10 @@
 #ifndef __RGB_H_
 #define __RGB_H_
 
+#include "stdint.h"
+
+typedef uint16_t COLOR;
+
 /*  RGB values for rainbow colours and black holes */
 #define   BLACK        0x0000                    /* ��ɫ�� 0, 0, 0               */
 #define   NAVY         0x000F                    /* ����ɫ�� 0, 0, 128           */

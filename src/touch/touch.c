@@ -9,6 +9,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f10x_conf.h"
 #include "ili932x.h"
+#include "RGB.h"
 #include "hardware.h"
 #include "touch.h"
 

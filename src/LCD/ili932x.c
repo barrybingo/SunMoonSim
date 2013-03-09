@@ -19,6 +19,7 @@ int printf( const char* format, ... ) { return 0; }
 
 uint16_t POINT_COLOR = BLUE,BACK_COLOR = WHITE;  /* �ֱ����õ����ɫ�͵�ɫ	*/
 
+
 /*****************************************************************************
 ** �������: LCD_Write_Reg
 ** ��������: дָ����
