@@ -167,18 +167,7 @@ void Draw_Big_Point(uint8_t x,uint16_t y)
 	LCD_DrawPoint(x,y+1);
 	LCD_DrawPoint(x+1,y+1);	 	  	
 }
-/*****************************************************************************
-** �������: Refreshes_Screen
-** ��������: ˢ����Ļ				
-** ��  ����: Dream
-** �ա�  ��: 2010��12��06��
-*****************************************************************************/
-void Refreshes_Screen(void)
-{
-	LCD_Clear(WHITE);//����  
-	WriteString(216,0,"XXX",RED);
-  	POINT_COLOR=BLUE;//���û�����ɫ 
-}
+
 //ת�����
 //��ݴ�������У׼����������ת����Ľ��,������X0,Y0��
 void Convert_Pos(void)
@@ -342,7 +331,7 @@ void Touch_Init()
   	/* Generate software interrupt: simulate a falling edge applied on PEN EXTI line */
   	EXTI_GenerateSWInterrupt(EXTI_Line13);
 
-	#ifdef ADJ_SAVE_ENABLE	  
+#ifdef ADJ_SAVE_ENABLE
 	if(Get_Adjdata())return;//�Ѿ�У׼
 	else			   //δУ׼?
 	{ 										    
@@ -351,9 +340,13 @@ void Touch_Init()
 		Save_Adjdata();	 
 	}			
 	Get_Adjdata();	 
-	#else	
-	LCD_Clear(WHITE);//����
-    Touch_Adjust();  //��ĻУ׼,���Զ�����			   
+#else
+	/* use hardcoded values */
+	Pen_Point.xfac=0.124688283;
+	Pen_Point.xoff=-8;
+
+	Pen_Point.yfac=0.166468486;
+	Pen_Point.yoff=-8;
 #endif			   
 }
 /*****************************************************************************
