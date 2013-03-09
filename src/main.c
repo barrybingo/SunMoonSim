@@ -237,7 +237,7 @@ void Test_SCREEN()
 	Set_Sun_Brightness(brightness);
 	Set_Moon_Brightness(MAX_SUN_MOON_BRIGHTNESS - brightness);
 
-	if (ButtonWidget(4,20,210,100,50,"RETURN"))
+	if (ButtonWidget(GEN_ID,20,210,100,50,"RETURN"))
 		Change_To_Screen(Main_Menu_SCREEN);
 }
 
@@ -248,7 +248,7 @@ void Test_SCREEN()
   */
 void Main_Menu_SCREEN()
 {
-  if (ButtonWidget(1,20,50,100,50,"TEST"))
+  if (ButtonWidget(GEN_ID,20,50,100,50,"TEST"))
   {
 	  Change_To_Screen(Test_SCREEN);
 	  return;

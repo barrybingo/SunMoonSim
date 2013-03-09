@@ -12,6 +12,12 @@
 
 #include "RGB.h"
 
+#ifdef IMGUI_SRC_ID
+#define GEN_ID ((IMGUI_SRC_ID) + (__LINE__))
+#else
+#define GEN_ID (__LINE__)
+#endif
+
 struct UIState
 {
 	uint8_t mousex;
