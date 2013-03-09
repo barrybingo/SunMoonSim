@@ -2,8 +2,8 @@
 #define __TOUCH_H	
 
 /* ADS7843/7846/UH7843/7846/XPT2046/TSC2046 ָ� */
-#define CMD_RDY 0XD0  //0B10010000���ò�ַ�ʽ��X���
-#define CMD_RDX 0X90  //0B11010000���ò�ַ�ʽ��Y���
+#define CMD_RDX 0XD0  //0B10010000���ò�ַ�ʽ��X���
+#define CMD_RDY 0X90  //0B11010000���ò�ַ�ʽ��Y���
 /* ʹ��24LC02 */
 
 #define PEN  PCin(13)   //PC13  INT

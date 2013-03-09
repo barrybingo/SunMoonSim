@@ -109,7 +109,7 @@ uint8_t Read_ADS(uint16_t *x,uint16_t *y)
 //50,��������,����Ϊ������ȷ,����������.	   
 //�ú����ܴ�����׼ȷ��
 #define ERR_RANGE 50 //��Χ 
-uint8_t Read_ADS2(uint16_t *y,uint16_t *x)
+uint8_t Read_ADS2(uint16_t *x,uint16_t *y)
 {
 	uint16_t x1,y1;
  	uint16_t x2,y2;
