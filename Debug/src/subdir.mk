@@ -9,6 +9,7 @@ C_SRCS += \
 ../src/key.c \
 ../src/led.c \
 ../src/main.c \
+../src/newlib_stubs.c \
 ../src/pwm.c \
 ../src/stm32f10x_it.c \
 ../src/sun_moon.c 
@@ -22,6 +23,7 @@ OBJS += \
 ./src/key.o \
 ./src/led.o \
 ./src/main.o \
+./src/newlib_stubs.o \
 ./src/pwm.o \
 ./src/startup_stm32f10x_md.o \
 ./src/stm32f10x_it.o \
@@ -33,6 +35,7 @@ C_DEPS += \
 ./src/key.d \
 ./src/led.d \
 ./src/main.d \
+./src/newlib_stubs.d \
 ./src/pwm.d \
 ./src/stm32f10x_it.d \
 ./src/sun_moon.d 
