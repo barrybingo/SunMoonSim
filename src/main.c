@@ -24,7 +24,7 @@
 #endif
 
 /* RTC -------------------------------------------------------------------------------*/
-#define RTCClockOutput_Enable  /* RTC Clock/64 is output on tamper pin(PC.13) */
+//#define RTCClockOutput_Enable  /* RTC Clock/64 is output on tamper pin(PC.13) */
 __IO uint32_t TimeDisplay = 0;
 
 /* GUI typedefs, local globals and defines-------------------------------------------------*/
@@ -132,15 +132,13 @@ int main(void) {
 	 functionality must be disabled */
 
 	/* Enable RTC Clock Output on Tamper Pin */
-	BKP_RTCOutputConfig(BKP_RTCOutputSource_CalibClock);
+	BKP_RTCOutputConfig(BKP_RTCOutputSource_None);
+#else
+	BKP_RTCOutputConfig(BKP_RTCOutputSource_None);
 #endif
 
 	/* Clear reset flags */
 	RCC_ClearFlag();
-
-	/* init LCD */
-	LCD_Init();
-	LCD_Clear(BLACK);
 
 	/* NVIC to enable interrupt on screen touch */
 	NVIC_Configuration_TouchScreenPen();
@@ -148,8 +146,12 @@ int main(void) {
 	/* touch screen */
 	Touch_Init();
 
+	/* init LCD */
+	LCD_Init();
+	LCD_Clear(BLACK);
+
 	/* GUI */
-	Change_To_Screen(Main_Menu_SCREEN);
+	Change_To_Screen(Test_SCREEN) ;// Main_Menu_SCREEN);
 
 	/* on board key buttons */
 	KeyInit(KEY1);
@@ -188,6 +190,7 @@ int main(void) {
 		/* is screen being touched? */
 		if(Pen_Point.Key_Sta==Key_Down)
 		{
+			//LEDOn(LED2);
 			Pen_Int_Set(0); // turn interrupt off
 			do
 			{
@@ -205,6 +208,7 @@ int main(void) {
 			}while(PEN==0);
 
 			Pen_Int_Set(1); // turn interrupt back on
+			//LEDOff(LED2);
 		}
 		else
 		{
@@ -226,14 +230,6 @@ int main(void) {
 void NVIC_Configuration_TouchScreenPen(void)
 {
   	NVIC_InitTypeDef NVIC_InitStructure;
-
-	#ifdef  VECT_TAB_RAM
-	  /* Set the Vector Table base location at 0x20000000 */
-	  NVIC_SetVectorTable(NVIC_VectTab_RAM, 0x0);
-	#else  /* VECT_TAB_FLASH  */
-	  /* Set the Vector Table base location at 0x08000000 */
-	  NVIC_SetVectorTable(NVIC_VectTab_FLASH, 0x0);
-	#endif
 
 	/* Configure one bit for preemption priority */
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
