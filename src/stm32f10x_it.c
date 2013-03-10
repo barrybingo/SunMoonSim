@@ -22,7 +22,10 @@
   */ 
 
 /* Includes ------------------------------------------------------------------*/
+#include "stm32f10x_rtc.h"
+#include "led.h"
 #include "stm32f10x_it.h"
+
 
 /** @addtogroup STM32F10x_StdPeriph_Examples
   * @{
@@ -36,6 +39,8 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
+volatile uint32_t msTicks = 0;
+extern __IO uint32_t TimeDisplay;
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
@@ -131,8 +136,6 @@ void PendSV_Handler(void)
 {
 }
 
-volatile uint32_t msTicks = 0;
-
 /**
   * @brief  This function handles SysTick Handler.
   * @param  None
@@ -170,6 +173,29 @@ void Delay(uint32_t ms) {
 /*  available peripheral interrupt handler's name please refer to the startup */
 /*  file (startup_stm32f10x_xx.s).                                            */
 /******************************************************************************/
+/**
+  * @brief  This function handles RTC global interrupt request.
+  * @param  None
+  * @retval None
+  */
+void RTC_IRQHandler(void)
+{
+  if (RTC_GetITStatus(RTC_IT_SEC) != RESET)
+  {
+    /* Clear the RTC Second interrupt */
+    RTC_ClearITPendingBit(RTC_IT_SEC);
+
+    /* Toggle LED1 */
+    LEDToggle(LED1);
+
+    /* Enable time update */
+    TimeDisplay = 1;
+
+    /* Wait until last write operation on RTC registers has finished */
+    RTC_WaitForLastTask();
+
+  }
+}
 
 /**
   * @brief  This function handles PPP interrupt request.

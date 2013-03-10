@@ -5,8 +5,17 @@ Sun Moon simulator for the STM32-MINI-V3.0 dev board.
 
 Built for STM32F103RBT6 with ADS7843 touch screen and LCD 2.8" TFT controller ILI9325
 
-- LED Sun connected to PB8
-- LED Moon connected to PB9
+Output
+* PB0 - LED Sun
+* PB1 - LED Moon
+* PA2 - LED1 on-board used for RTC seconds tick tock
+* PA3 - LED2 on-board unused
+
+Input
+* PA0 - KEY2 on-board go to main menu
+* PA1 - KEY1 on-board used to indicate recalibrate touch screen 
+
+
 
 No Settings are stored in non-volatile storage.
 
