@@ -33,7 +33,7 @@ typedef struct
 extern Pen_Holder Pen_Point;
 
 //#define ADJ_SAVE_ENABLE	    
-  
+void Touch_Init();
 void Touch_Configuration(void);
 void ADS_Write_Byte(uint8_t num);
 uint16_t ADS_Read_AD(uint8_t CMD);
