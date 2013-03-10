@@ -13,6 +13,15 @@
 #include "ili932x.h"
 #include "Font_Lib.h"	 //�ֿ��ļ���
 #include "RGB.h"
+
+#ifndef max
+#define max(a,b)    (((a) > (b)) ? (a) : (b))
+#endif
+#ifndef min
+#define min(a,b)    (((a) < (b)) ? (a) : (b))
+#endif
+
+
 //
 int printf( const char* format, ... ) { return 0; }
 
@@ -584,10 +593,44 @@ void LCD_WriteBMP(uint8_t Xpos, uint16_t Ypos, uint8_t Height, uint16_t Width, u
 	LCD_WriteReg(R82, 0x0000); //��ֱ����GRAM��ʼ��ַ
 	LCD_WriteReg(R83, 0x013F); //��ֱ����GRAM�����ַ
 }
+
+/*
+ * Write bitmap of size HeightxWidth to Xpos,Ypos with double sized output dimensions
+ */
+void LCD_WriteBMPx2(uint8_t Xpos, uint16_t Ypos, uint8_t Height, uint16_t Width, uint8_t *bitmap)
+{
+  	uint32_t x,y;
+
+  	LCD_SetDisplayWindow(Xpos, Ypos, (2*Width)-1, (2*Height)-1);
+  	LCD_WriteRAM_Prepare();
+
+  	for(x = 0; x < Height; x++)
+  	{
+  		for(y = 0; y < Width; y++)
+  		{
+  			uint16_t c = ((uint16_t *)bitmap)[(x*Width)+y];
+  			Write_Dat(c);
+  			Write_Dat(c);
+  		}
+  		for(y = 0; y < Width; y++)
+  		{
+  			uint16_t c = ((uint16_t *)bitmap)[(x*Width)+y];
+  			Write_Dat(c);
+  			Write_Dat(c);
+  		}
+  	}
+	//�ָ������С
+	LCD_WriteReg(R80, 0x0000); //ˮƽ����GRAM��ʼ��ַ
+	LCD_WriteReg(R81, 0x00EF); //ˮƽ����GRAM�����ַ
+	LCD_WriteReg(R82, 0x0000); //��ֱ����GRAM��ʼ��ַ
+	LCD_WriteReg(R83, 0x013F); //��ֱ����GRAM�����ַ
+}
+
+
 /*****************************************************************************
 ** �������: LCD_DrawLine
 ** ��������: ��ָ��������λ�û�һ����
-				x1,y1:�������  x2,y2:�յ���� 
+				x1,y1:�������  x2,y2:�յ����
 ** ��  ����: Dream
 ** �ա�  ��: 2010��12��06��
 *****************************************************************************/

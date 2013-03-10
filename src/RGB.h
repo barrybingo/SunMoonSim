@@ -24,4 +24,6 @@ typedef uint16_t COLOR;
 #define   WHITE        0xFFFF                    /* ��ɫ�� 255, 255, 255         */
 #define   IDMCOLOR(color) (((color & 0x001F) << 11) | ((color & 0xF800) >> 11) | (color & 0x07E0))
 
+#define RGB(red,green,blue) (((uint16_t)red&0xf8) << 8) | (((uint16_t)green&0xfc) << 3) | (blue&0xf8 >> 3)
+
 #endif

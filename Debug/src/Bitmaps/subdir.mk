@@ -4,17 +4,17 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
-../src/LCD/ili932x.c 
+../src/Bitmaps/background120x160.c 
 
 OBJS += \
-./src/LCD/ili932x.o 
+./src/Bitmaps/background120x160.o 
 
 C_DEPS += \
-./src/LCD/ili932x.d 
+./src/Bitmaps/background120x160.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes
-src/LCD/%.o: ../src/LCD/%.c
+src/Bitmaps/%.o: ../src/Bitmaps/%.c
 	@echo 'Building file: $<'
 	@echo 'Invoking: ARM Sourcery Linux GCC C Compiler'
 	arm-none-eabi-gcc -DUSE_STDPERIPH_DRIVER -DSTM32F10X_MD -I"/home/bbingo/workspace/SunMoonOnSTM32/CMSIS/CM3/CoreSupport" -I"/home/bbingo/workspace/SunMoonOnSTM32/CMSIS/CM3/DeviceSupport/ST/STM32F10x" -I"/home/bbingo/workspace/SunMoonOnSTM32/STM32F10x_StdPeriph_Driver/inc" -I"/home/bbingo/workspace/SunMoonOnSTM32/src/LCD" -I"/home/bbingo/workspace/SunMoonOnSTM32/src/touch" -I"/home/bbingo/workspace/SunMoonOnSTM32/src" -O0 -ffunction-sections -fdata-sections -Wall -Wa,-adhlns="$@.lst" -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -mcpu=cortex-m3 -mthumb -g3 -gdwarf-2 -o "$@" "$<"

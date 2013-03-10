@@ -32,6 +32,7 @@ SUBDIRS := \
 src/touch \
 src \
 src/LCD \
+src/Bitmaps \
 STM32F10x_StdPeriph_Driver/src \
 CMSIS/CM3/DeviceSupport/ST/STM32F10x \
 CMSIS/CM3/CoreSupport \

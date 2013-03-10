@@ -15,6 +15,7 @@
 #include "ili932x.h"
 #include "touch.h"
 #include "hardware.h"
+#include "Bitmaps/background120x160.c"
 
 
 /* some basic compiler checks ---------------------------------------*/
@@ -51,7 +52,7 @@ int main(void) {
 
 	/* init LCD */
 	LCD_Init();
-	LCD_Clear(WHITE);
+	LCD_Clear(BLACK);
 
 	/* NVIC to enable interrupt on screen touch */
 	NVIC_Configuration();
@@ -60,7 +61,7 @@ int main(void) {
 	Touch_Init();
 
 	/* GUI */
-	currentScreenPtr = &Main_Menu_SCREEN;
+	Change_To_Screen(Main_Menu_SCREEN);
 
 	/* on board key buttons */
 	KeyInit(KEY1);
@@ -206,7 +207,7 @@ void Render_Current_Screen()
   */
 void Change_To_Screen(SCREEN_PTR scrPtr)
 {
-	LCD_Clear(WHITE);
+	LCD_WriteBMPx2(0, 0, 160,120, background120x160_bmp);
 	currentScreenPtr = scrPtr;
 }
 
