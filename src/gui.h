@@ -20,8 +20,8 @@
 
 struct UIState
 {
-	uint8_t mousex;
-	uint8_t mousey;
+	uint16_t mousex;
+	uint16_t mousey;
 	uint8_t mousedown;
 
 	uint8_t hotitem;
@@ -32,6 +32,8 @@ extern struct UIState uistate;
 
 void DrawRect(uint16_t x, uint16_t y, uint16_t w, uint16_t h, COLOR color);
 void DrawString(uint16_t x, uint16_t y, uint8_t *pStr, COLOR textColor, COLOR backColor);
+void DrawPoint(uint16_t x, uint16_t y, COLOR color);
+void DrawLine(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, COLOR color);
 
 uint8_t RegionHit(uint16_t x, uint16_t y, uint16_t w, uint16_t h);
 void Imgui_Prepare();

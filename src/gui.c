@@ -42,6 +42,18 @@ void DrawString(uint16_t x, uint16_t y, uint8_t *pStr, COLOR textColor, COLOR ba
 }
 
 
+void DrawPoint(uint16_t x, uint16_t y, COLOR color)
+{
+	POINT_COLOR = color;
+	LCD_DrawPoint(x, y);
+}
+
+void DrawLine(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, COLOR color)
+{
+	POINT_COLOR = color;
+	LCD_DrawLine(x1, y1, x2, y2);
+}
+
 
 /**
   * @brief  Check whether current mouse position is within a rectangle
