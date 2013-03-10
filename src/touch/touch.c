@@ -398,25 +398,7 @@ void Pen_Int_Set(uint8_t en)
 	if(en)EXTI->IMR|=1<<13;   //����line13�ϵ��ж�	  	
 	else EXTI->IMR&=~(1<<13); //�ر�line13�ϵ��ж�	   
 }
-/*****************************************************************************
-** �������: EXTI15_10_IRQHandler
-** ��������: �жϴ��?��
-				�ж�,��⵽PEN�ŵ�һ���½���.
-					��λPen_Point.Key_StaΪ����״̬
-						�ж���4���ϵ��жϼ��
-** ��  ����: Dream
-** �ա�  ��: 2010��12��06��
-*****************************************************************************/
-void EXTI15_10_IRQHandler()
-{
-	uint16_t i;
-  	if(EXTI_GetITStatus(EXTI_IMR_MR13) != RESET)
-	{
-    	EXTI_ClearITPendingBit(EXTI_IMR_MR13);	 //����жϹ���λ
-		for(i=1000;i>0;i--); 			//��ʱȥ����
-		Pen_Point.Key_Sta=Key_Down;//������ 		 		  				 
-	}
-}
+
 #ifdef ADJ_SAVE_ENABLE
 #define SAVE_ADDR_BASE 40
 /*****************************************************************************

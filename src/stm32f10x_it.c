@@ -23,6 +23,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f10x_rtc.h"
+#include "touch.h"
 #include "led.h"
 #include "stm32f10x_it.h"
 
@@ -183,7 +184,7 @@ void RTC_IRQHandler(void)
   if (RTC_GetITStatus(RTC_IT_SEC) != RESET)
   {
     /* Clear the RTC Second interrupt */
-    RTC_ClearITPendingBit(RTC_IT_SEC);
+    RTC_ClearITPendingBit(RTC_FLAG_SEC);
 
     /* Toggle LED1 */
     LEDToggle(LED1);
@@ -195,6 +196,33 @@ void RTC_IRQHandler(void)
     RTC_WaitForLastTask();
 
   }
+  else if(RTC_GetITStatus(RTC_IT_ALR) != RESET)
+  {
+	  RTC_ClearITPendingBit(RTC_FLAG_ALR);
+  }
+  else if(RTC_GetITStatus(RTC_IT_OW)!=RESET)
+  {
+	  RTC_ClearITPendingBit(RTC_FLAG_OW);
+  }
+}
+
+/******************************************************************************/
+/**
+  * @brief  This function handles EXTI15_10_IRQ global interrupt request.
+  * @param  None
+  * @retval None
+  */
+void EXTI15_10_IRQHandler(void)
+{
+	uint16_t i;
+  	if(EXTI_GetITStatus(EXTI_IMR_MR13) != RESET)
+	{
+    	EXTI_ClearITPendingBit(EXTI_IMR_MR13);
+
+        LEDToggle(LED2);
+		for(i=1000;i>0;i--);
+		Pen_Point.Key_Sta=Key_Down;
+	}
 }
 
 /**
