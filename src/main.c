@@ -27,14 +27,31 @@
 typedef void(*SCREEN_PTR)();
 SCREEN_PTR currentScreenPtr;
 
+#define gui_h_margin 20
+#define gui_v_margin 45
+#define gui_button_height 50
+#define gui_button_width  LCD_W-(2*gui_h_margin)
+
+#define GUI_V_GAP  (LCD_H - (nButtons*gui_button_height) - (gui_v_margin*2)) / (nButtons-1)
+#define GUI_V_POS(n) gui_v_margin+(n*(gui_button_height+GUI_V_GAP))
+
+#define ShowButton(x,str) ButtonWidget(GEN_ID, gui_h_margin, GUI_V_POS(x), gui_button_width, gui_button_height, str)
+
 
 /* function prototypes ----------------------------------------------*/
 void NVIC_Configuration(void);
 uint8_t KEY_Scan(void);
 
+/* GUI control */
 void Render_Current_Screen();
 void Change_To_Screen(SCREEN_PTR scrPtr);
+
+/* GUI screens */
 void Main_Menu_SCREEN();
+void Wavy_SCREEN();
+void Manual_SCREEN();
+void Settings_SCREEN();
+void Change_Time_SCREEN();
 void Test_SCREEN();
 
 /**
@@ -212,6 +229,85 @@ void Change_To_Screen(SCREEN_PTR scrPtr)
 }
 
 /**
+  * @brief  Undulating wavy lights
+  * @param  None
+  * @retval None
+  */
+void Wavy_SCREEN()
+{
+	const uint16_t nButtons = 1;
+
+	if (ShowButton(0,"Wavy ret"))
+	{
+		Change_To_Screen(Main_Menu_SCREEN);
+		return;
+	}
+}
+
+/**
+  * @brief  Set moon and sun using sliders
+  * @param  None
+  * @retval None
+  */
+void Manual_SCREEN()
+{
+	const uint16_t nButtons = 1;
+
+	if (ShowButton(0,"Man ret"))
+	{
+		Change_To_Screen(Main_Menu_SCREEN);
+		return;
+	}
+}
+
+/**
+  * @brief  Change some basic settings
+  * @param  None
+  * @retval None
+  */
+void Settings_SCREEN()
+{
+	const uint16_t nButtons = 3;
+
+	if (ShowButton(0,"Change Time"))
+	{
+		Change_To_Screen(Change_Time_SCREEN);
+		return;
+	}
+
+	if (ShowButton(1,"Testing"))
+	{
+		Change_To_Screen(Test_SCREEN);
+		return;
+	}
+
+
+	if (ShowButton(2,"Main Menu"))
+	{
+		Change_To_Screen(Main_Menu_SCREEN);
+		return;
+	}
+
+}
+
+/**
+  * @brief  Adjust RTC
+  * @param  None
+  * @retval None
+  */
+void Change_Time_SCREEN()
+{
+	const uint16_t nButtons = 1;
+
+	if (ShowButton(0,"CTime ret"))
+	{
+		Change_To_Screen(Main_Menu_SCREEN);
+		return;
+	}
+}
+
+
+/**
   * @brief  Testing screen with various diagnostic info displayed
   * @param  None
   * @retval None
@@ -238,7 +334,7 @@ void Test_SCREEN()
 	Set_Sun_Brightness(brightness);
 	Set_Moon_Brightness(MAX_SUN_MOON_BRIGHTNESS - brightness);
 
-	if (ButtonWidget(GEN_ID,20,210,100,50,"RETURN"))
+	if (ButtonWidget(GEN_ID,20,210,100,50,"Main Menu"))
 		Change_To_Screen(Main_Menu_SCREEN);
 }
 
@@ -249,11 +345,25 @@ void Test_SCREEN()
   */
 void Main_Menu_SCREEN()
 {
-  if (ButtonWidget(GEN_ID,20,50,100,50,"TEST"))
-  {
-	  Change_To_Screen(Test_SCREEN);
-	  return;
-  }
+	const uint16_t nButtons = 3;
+
+	if (ShowButton(0,"Wavy Mode"))
+	{
+		Change_To_Screen(Wavy_SCREEN);
+		return;
+	}
+
+	if (ShowButton(1,"Manual Mode"))
+	{
+		Change_To_Screen(Manual_SCREEN);
+		return;
+	}
+
+	if (ShowButton(2,"Settings"))
+	{
+		Change_To_Screen(Settings_SCREEN);
+		return;
+	}
 }
 
 
