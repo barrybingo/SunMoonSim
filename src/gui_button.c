@@ -20,7 +20,7 @@
  *         0: If button has not been clicked
  */
 uint8_t ButtonWidget(uint8_t id, uint16_t x, uint16_t y, uint16_t w, uint16_t h,
-		uint8_t* text)
+		uint8_t* text, uint8_t fullrender)
 {
 	COLOR bg;
 
@@ -48,7 +48,8 @@ uint8_t ButtonWidget(uint8_t id, uint16_t x, uint16_t y, uint16_t w, uint16_t h,
 		bg = BLUE;
 	}
 
-	DrawRect(x, y, w, h, bg);
+	if (fullrender)
+		DrawRect(x, y, w, h, bg);
 	DrawString(x + 20, y + (h / 2) - 10, text, WHITE, bg);
 
 	// If button is hot and active, but mouse button is not
