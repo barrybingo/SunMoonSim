@@ -349,15 +349,41 @@ void LCD_ShowString(uint8_t x,uint16_t y,__I uint8_t *p)
 ** ��  ����: Dream
 ** �ա�  ��: 2010��12��06��
 *****************************************************************************/
+void LCD_ShowCharBig(uint8_t x,uint16_t y,uint8_t chars, uint8_t scale, uint8_t mode)
+{
+	uint8_t temp;
+    uint16_t pos,t;
+
+    if(x>MAX_CHAR_POSX||y>MAX_CHAR_POSY) return;	    
+											
+	if(!mode)
+	{
+		LCD_Fill(x, y, x+(scale*8), y+(scale*16), BACK_COLOR);
+	}
+
+	for(pos=0;pos<16;pos++)
+	{
+		uint16_t Y = y+(pos * scale);
+		temp=ASCII_1608[chars-0x20][pos];
+		for(t=0;t<8;t++)
+		{
+			uint16_t X = x+(t*scale);
+			if((temp<<t)&0x80) {
+				LCD_Fill(X, Y, X+scale, Y+scale, POINT_COLOR);
+			}
+		}
+	}
+}
+
 void LCD_ShowChar(uint8_t x,uint16_t y,uint8_t chars,uint8_t size,uint8_t mode)
 {
 	uint8_t temp;
-    uint8_t pos,t;      
-    if(x>MAX_CHAR_POSX||y>MAX_CHAR_POSY) return;	    
-											
+    uint8_t pos,t;
+    if(x>MAX_CHAR_POSX||y>MAX_CHAR_POSY) return;
+
 	LCD_SetDisplayWindow(x,y,(size/2-1),size-1);  //���ô���
 
-	LCD_WriteRAM_Prepare();        //��ʼд��GRAM	   
+	LCD_WriteRAM_Prepare();        //��ʼд��GRAM
 	if(!mode) 						//�ǵ��ӷ�ʽ
 	{
 		for(pos=0;pos<size;pos++)
@@ -365,19 +391,19 @@ void LCD_ShowChar(uint8_t x,uint16_t y,uint8_t chars,uint8_t size,uint8_t mode)
 			if(size==12)temp=ASCII_1206[chars-0x20][pos];//����1206����
 			else temp=ASCII_1608[chars-0x20][pos];		 //����1608����
 			for(t=0;t<size/2;t++)
-		    {     
+		    {
 		        //if(temp&0x01)            	 			//�ȴ���λ��ȡģ�й�ϵ
 		        if((temp<<t)&0x80)						//�ȴ���λ
 				{
 					Write_Dat(RED);
 				}
-				else 
+				else
 				{
-					Write_Dat(WHITE);	        
+					Write_Dat(WHITE);
 		        }
 				//temp>>=1; 	   							//����ȴ���λ��ȥ��������
 		    }
-		}	
+		}
 	}
 	else//���ӷ�ʽ
 	{
@@ -386,17 +412,17 @@ void LCD_ShowChar(uint8_t x,uint16_t y,uint8_t chars,uint8_t size,uint8_t mode)
 			if(size==12)temp=ASCII_1206[chars-0x20][pos];	//����1206����
 			else temp=ASCII_1608[chars-0x20][pos];		 	//����1608����
 			for(t=0;t<size/2;t++)
-		    {                 
-		        if((temp<<t)&0x80)LCD_DrawPoint(x+t,y+pos);	//��һ����     
+		    {
+		        if((temp<<t)&0x80)LCD_DrawPoint(x+t,y+pos);	//��һ����
 		        //temp>>=1; 								//����ȴ���λ��ȥ��������
 		    }
 		}
-	}	    
+	}
 	/* �ָ������С	*/
 	LCD_WriteReg(R80, 0x0000); //ˮƽ����GRAM��ʼ��ַ
 	LCD_WriteReg(R81, 0x00EF); //ˮƽ����GRAM�����ַ
 	LCD_WriteReg(R82, 0x0000); //��ֱ����GRAM��ʼ��ַ
-	LCD_WriteReg(R83, 0x013F); //��ֱ����GRAM�����ַ	
+	LCD_WriteReg(R83, 0x013F); //��ֱ����GRAM�����ַ
 }
 /*****************************************************************************
 ** �������: LCD_Clear
@@ -544,7 +570,26 @@ uint32_t Num_power(uint8_t m,uint8_t n)
 				num:��ֵ(0~4294967295);
 ** ��  ����: Dream
 ** �ա�  ��: 2010��12��06��
-*****************************************************************************/	 
+*****************************************************************************/
+void LCD_ShowNumBig(uint8_t x,uint16_t y,u32 num,uint8_t len,uint8_t scale)
+{
+	uint8_t t,temp;
+	uint8_t enshow=0;
+	for(t=0;t<len;t++)
+	{
+		temp=(num/Num_power(10,len-t-1))%10;
+		if(enshow==0&&t<(len-1))
+		{
+			if(temp==0)
+			{
+				LCD_ShowCharBig(x+(8*scale)*t,y,' ',scale,0);
+				continue;
+			}else enshow=1;
+
+		}
+	 	LCD_ShowCharBig(x+(8*scale)*t,y,temp+'0',scale,0);
+	}
+}
 void LCD_ShowNum(uint8_t x,uint16_t y,u32 num,uint8_t len,uint8_t size)
 {         	
 	uint8_t t,temp;
