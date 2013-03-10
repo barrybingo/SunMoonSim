@@ -20,7 +20,7 @@ struct UIState uistate = { 0, 0, 0, 0, 0 };
   * 		colour: Fill color
   * @retval None
   */
-void DrawRect(uint8_t x, uint8_t y, uint8_t w, uint8_t h, COLOR color)
+void DrawRect(uint16_t x, uint16_t y, uint16_t w, uint16_t h, COLOR color)
 {
 	LCD_Fill(x, y, x + w, y + h, color);
 }
@@ -50,7 +50,7 @@ void DrawString(uint16_t x, uint16_t y, uint8_t *pStr, COLOR textColor, COLOR ba
   * @retval 1: HIT
   * 	    0: MISS
   */
-uint8_t RegionHit(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
+uint8_t RegionHit(uint16_t x, uint16_t y, uint16_t w, uint16_t h)
 {
 	if (uistate.mousex < x || uistate.mousey < y || uistate.mousex >= x + w
 			|| uistate.mousey >= y + h)

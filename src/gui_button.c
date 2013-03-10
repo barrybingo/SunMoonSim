@@ -19,7 +19,7 @@
  * @retval 1: If button has been clicked
  *         0: If button has not been clicked
  */
-uint8_t ButtonWidget(uint8_t id, uint8_t x, uint8_t y, uint8_t w, uint8_t h,
+uint8_t ButtonWidget(uint8_t id, uint16_t x, uint16_t y, uint16_t w, uint16_t h,
 		uint8_t* text)
 {
 	COLOR bg;
