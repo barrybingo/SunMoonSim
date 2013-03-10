@@ -5,6 +5,7 @@
  * @brief   Main program body
  ******************************************************************************
  */
+#include <stdio.h>
 #include "stm32f10x.h"
 #include "stm32f10x_conf.h"
 #include "stm32f10x_it.h"
@@ -17,6 +18,7 @@
 #include "hardware.h"
 #include "Bitmaps/background120x160.c"
 
+#define VERSION_TEXT "Orange-Test 0.1"
 
 /* some basic compiler checks ---------------------------------------*/
 #if !defined (USE_STDPERIPH_DRIVER)  || !defined (STM32F10X_MD)
@@ -55,15 +57,15 @@ void Main_Menu_SCREEN();
 void Wavy_SCREEN();
 void Manual_SCREEN();
 void Settings_SCREEN();
+void Config_Sun_SCREEN();
+void Config_Moon_SCREEN();
 void Change_Time_SCREEN();
 void Test_SCREEN();
 
 /* RTC control */
 void NVIC_Configuration_RTC(void);
 void RTC_Configuration(void);
-uint32_t Time_Regulate(void);
-void Time_Adjust(void);
-void Time_Show(void);
+void Time_Adjust(uint32_t newTime);
 void Time_Display(uint32_t TimeVar);
 
 /**
@@ -95,7 +97,7 @@ int main(void) {
 		printf("\r\n RTC configured....");
 
 		/* Adjust time by values entered by the user on the hyperterminal */
-		Time_Adjust();
+		Time_Adjust(0);
 
 		BKP_WriteBackupRegister(BKP_DR1, 0xA5A5);
 	} else {
@@ -151,7 +153,7 @@ int main(void) {
 	LCD_Clear(BLACK);
 
 	/* GUI */
-	Change_To_Screen(Test_SCREEN) ;// Main_Menu_SCREEN);
+	Change_To_Screen(Main_Menu_SCREEN);
 
 	/* on board key buttons */
 	KeyInit(KEY1);
@@ -299,6 +301,7 @@ void Render_Current_Screen()
 void Change_To_Screen(SCREEN_PTR scrPtr)
 {
 	LCD_WriteBMPx2(0, 0, 160,120, background120x160_bmp);
+	Time_Display(RTC_GetCounter());
 	currentScreenPtr = scrPtr;
 }
 
@@ -341,7 +344,7 @@ void Manual_SCREEN()
   */
 void Settings_SCREEN()
 {
-	const uint16_t nButtons = 3;
+	const uint16_t nButtons = 4;
 
 	if (ShowButton(0,"Change Time"))
 	{
@@ -349,19 +352,23 @@ void Settings_SCREEN()
 		return;
 	}
 
-	if (ShowButton(1,"Testing"))
+	if (ShowButton(1,"Config Sun"))
 	{
-		Change_To_Screen(Test_SCREEN);
+		Change_To_Screen(Config_Sun_SCREEN);
 		return;
 	}
 
+	if (ShowButton(2,"Config Moon"))
+	{
+		Change_To_Screen(Config_Moon_SCREEN);
+		return;
+	}
 
-	if (ShowButton(2,"Main Menu"))
+	if (ShowButton(3,"Main Menu"))
 	{
 		Change_To_Screen(Main_Menu_SCREEN);
 		return;
 	}
-
 }
 
 /**
@@ -371,13 +378,57 @@ void Settings_SCREEN()
   */
 void Change_Time_SCREEN()
 {
-	const uint16_t nButtons = 1;
+	const uint8_t BUTTON_TOP_Y = 5;
+	const uint8_t BUTTON_BOTTOM_Y = 154;
+	const uint8_t BUTTON_SIZE = 64;
 
-	if (ShowButton(0,"CTime ret"))
+
+	uint32_t THH = 0, TMM = 0, TSS = 0;
+	uint32_t TimeVar = RTC_GetCounter();
+
+	/* Compute  hours */
+	THH = TimeVar / 3600;
+	/* Compute minutes */
+	TMM = (TimeVar % 3600) / 60;
+	/* Compute seconds */
+	TSS = (TimeVar % 3600) % 60;
+
+	if (ButtonWidget(GEN_ID,20,230,200,50,"OK"))
 	{
-		Change_To_Screen(Main_Menu_SCREEN);
+		Change_To_Screen(Settings_SCREEN);
 		return;
 	}
+
+	// + hour
+	if (ButtonWidget(GEN_ID,10,BUTTON_TOP_Y,BUTTON_SIZE,BUTTON_SIZE,"+H"))
+		Time_Adjust(TimeVar+3600);
+
+	// - hour
+	if (ButtonWidget(GEN_ID,10,BUTTON_BOTTOM_Y,BUTTON_SIZE,BUTTON_SIZE,"-H"))
+		Time_Adjust(TimeVar-3600);
+
+	// + min
+	if (ButtonWidget(GEN_ID,85,BUTTON_TOP_Y,BUTTON_SIZE,BUTTON_SIZE,"+M"))
+		Time_Adjust(TimeVar+60);
+
+	// - min
+	if (ButtonWidget(GEN_ID,85,BUTTON_BOTTOM_Y,BUTTON_SIZE,BUTTON_SIZE,"-M"))
+		Time_Adjust(TimeVar-60);
+
+	// + sec
+	if (ButtonWidget(GEN_ID,160,BUTTON_TOP_Y,BUTTON_SIZE,BUTTON_SIZE,"+S"))
+		Time_Adjust(TimeVar+1);
+
+	// - sec
+	if (ButtonWidget(GEN_ID,160,BUTTON_BOTTOM_Y,BUTTON_SIZE,BUTTON_SIZE,"-S"))
+		Time_Adjust(TimeVar-1);
+
+	POINT_COLOR = GREEN;
+	BACK_COLOR = BLACK;
+
+	LCD_ShowNumBig(10,80,THH,2,4);
+	LCD_ShowNumBig(85,80,TMM,2,4);
+	LCD_ShowNumBig(160,80,TSS,2,4);
 }
 
 
@@ -397,6 +448,10 @@ void Test_SCREEN()
 
 	WriteString(50,135,"KEY1=Calibrate screen",BLUE);
 	WriteString(50,155,"KEY2=Main menu",BLUE);
+
+	LCD_ShowNumBig(0,0,9876,4,4);
+
+
 
 	/* draw on the LCD like a pencil */
 	Draw_Big_Point(Pen_Point.X0,Pen_Point.Y0);
@@ -438,6 +493,18 @@ void Main_Menu_SCREEN()
 		Change_To_Screen(Settings_SCREEN);
 		return;
 	}
+}
+
+void Config_Sun_SCREEN()
+{
+	if (ButtonWidget(GEN_ID,20,210,100,50,"OK"))
+		Change_To_Screen(Settings_SCREEN);
+}
+
+void Config_Moon_SCREEN()
+{
+	if (ButtonWidget(GEN_ID,20,210,100,50,"OK"))
+		Change_To_Screen(Settings_SCREEN);
 }
 
 /**
@@ -508,31 +575,29 @@ void RTC_Configuration(void)
 }
 
 /**
-  * @brief  Returns the time entered by user, using Hyperterminal.
-  * @param  None
-  * @retval Current time RTC counter value
-  */
-uint32_t Time_Regulate(void)
-{
-  uint32_t Tmp_HH = 15, Tmp_MM = 4, Tmp_SS = 12;
-
-  /* Return the value to store in RTC counter register */
-  return((Tmp_HH*3600 + Tmp_MM*60 + Tmp_SS));
-}
-
-/**
   * @brief  Adjusts time.
   * @param  None
   * @retval None
   */
-void Time_Adjust(void)
+void Time_Adjust(uint32_t newTime)
 {
-  /* Wait until last write operation on RTC registers has finished */
-  RTC_WaitForLastTask();
-  /* Change the current time */
-  RTC_SetCounter(Time_Regulate());
-  /* Wait until last write operation on RTC registers has finished */
-  RTC_WaitForLastTask();
+    /* Enable PWR and BKP clocks */
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR | RCC_APB1Periph_BKP, ENABLE);
+
+    /* Allow access to BKP Domain */
+    PWR_BackupAccessCmd(ENABLE);
+
+    /* Wait until last write operation on RTC registers has finished */
+    RTC_WaitForLastTask();
+
+    /* Change the current time */
+    RTC_SetCounter(newTime);
+
+    /* Wait until last write operation on RTC registers has finished */
+    RTC_WaitForLastTask();
+
+    BKP_WriteBackupRegister(BKP_DR1, 0xA5A5);
+
 }
 
 /**
@@ -540,29 +605,30 @@ void Time_Adjust(void)
   * @param  TimeVar: RTC counter value.
   * @retval None
   */
-void Time_Display(uint32_t TimeVar)
-{
-  uint32_t THH = 0, TMM = 0, TSS = 0;
+void Time_Display(uint32_t TimeVar) {
+	unsigned char buff[10];
+	uint32_t THH = 0, TMM = 0, TSS = 0;
 
-  /* Reset RTC Counter when Time is 23:59:59 */
-  if (RTC_GetCounter() == 0x0001517F)
-  {
-     RTC_SetCounter(0x0);
-     /* Wait until last write operation on RTC registers has finished */
-     RTC_WaitForLastTask();
-  }
+	/* Reset RTC Counter when Time is 23:59:59 */
+	if (RTC_GetCounter() == 0x0001517F) {
+		RTC_SetCounter(0x0);
+		/* Wait until last write operation on RTC registers has finished */
+		RTC_WaitForLastTask();
+	}
 
-  /* Compute  hours */
-  THH = TimeVar / 3600;
-  /* Compute minutes */
-  TMM = (TimeVar % 3600) / 60;
-  /* Compute seconds */
-  TSS = (TimeVar % 3600) % 60;
+	/* Compute  hours */
+	THH = TimeVar / 3600;
+	/* Compute minutes */
+	TMM = (TimeVar % 3600) / 60;
+	/* Compute seconds */
+	TSS = (TimeVar % 3600) % 60;
 
-  LCD_ShowNum(5,5,THH,2,16);
-  LCD_ShowNum(23,5,TMM,2,16);
-  LCD_ShowNum(43,5,TSS,2,16);
-  //printf("Time: %0.2d:%0.2d:%0.2d\r", THH, TMM, TSS);
+
+	DrawRect(0, LCD_H-20, LCD_W, 20, BLACK);
+	sprintf(buff, "%0.2d:%0.2d:%0.2d", THH, TMM, TSS);
+	BACK_COLOR = BLACK;
+	WriteString(5, LCD_H-15, buff, WHITE);
+	WriteString(115, LCD_H-15, VERSION_TEXT, WHITE);
 }
 
 
