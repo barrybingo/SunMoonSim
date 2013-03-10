@@ -6,6 +6,7 @@
  ******************************************************************************
  */
 #include <stdio.h>
+#include <math.h>
 #include "stm32f10x.h"
 #include "stm32f10x_conf.h"
 #include "stm32f10x_it.h"
@@ -30,7 +31,7 @@
 __IO uint32_t TimeDisplay = 0;
 
 /* GUI typedefs, local globals and defines-------------------------------------------------*/
-typedef void(*SCREEN_PTR)();
+typedef void(*SCREEN_PTR)(uint8_t);
 SCREEN_PTR currentScreenPtr;
 
 #define gui_h_margin 20
@@ -41,7 +42,7 @@ SCREEN_PTR currentScreenPtr;
 #define GUI_V_GAP  (LCD_H - (nButtons*gui_button_height) - (gui_v_margin*2)) / (nButtons-1)
 #define GUI_V_POS(n) gui_v_margin+(n*(gui_button_height+GUI_V_GAP))
 
-#define ShowButton(x,str) ButtonWidget(GEN_ID, gui_h_margin, GUI_V_POS(x), gui_button_width, gui_button_height, str)
+#define ShowButton(x,str) ButtonWidget(GEN_ID, gui_h_margin, GUI_V_POS(x), gui_button_width, gui_button_height, str, fullrender)
 
 
 /* function prototypes ----------------------------------------------*/
@@ -53,14 +54,14 @@ void Render_Current_Screen();
 void Change_To_Screen(SCREEN_PTR scrPtr);
 
 /* GUI screens */
-void Main_Menu_SCREEN();
-void Wavy_SCREEN();
-void Manual_SCREEN();
-void Settings_SCREEN();
-void Config_Sun_SCREEN();
-void Config_Moon_SCREEN();
-void Change_Time_SCREEN();
-void Test_SCREEN();
+void Main_Menu_SCREEN(uint8_t fullrender);
+void Wavy_SCREEN(uint8_t fullrender);
+void Manual_SCREEN(uint8_t fullrender);
+void Settings_SCREEN(uint8_t fullrender);
+void Config_Sun_SCREEN(uint8_t fullrender);
+void Config_Moon_SCREEN(uint8_t fullrender);
+void Change_Time_SCREEN(uint8_t fullrender);
+void Test_SCREEN(uint8_t fullrender);
 
 /* RTC control */
 void NVIC_Configuration_RTC(void);
@@ -153,7 +154,7 @@ int main(void) {
 	LCD_Clear(BLACK);
 
 	/* GUI */
-	Change_To_Screen(Main_Menu_SCREEN);
+	Change_To_Screen(Config_Sun_SCREEN); //Main_Menu_SCREEN);
 
 	/* on board key buttons */
 	KeyInit(KEY1);
@@ -288,9 +289,9 @@ uint8_t KEY_Scan(void)
   */
 void Render_Current_Screen()
 {
-	  Imgui_Prepare();
-	  currentScreenPtr();
-	  Imgui_Finish();
+	Imgui_Prepare();
+	currentScreenPtr(0);
+	Imgui_Finish();
 }
 
 /**
@@ -302,6 +303,10 @@ void Change_To_Screen(SCREEN_PTR scrPtr)
 {
 	LCD_WriteBMPx2(0, 0, 160,120, background120x160_bmp);
 	Time_Display(RTC_GetCounter());
+	Imgui_Prepare();
+	scrPtr(1);
+	Imgui_Finish();
+
 	currentScreenPtr = scrPtr;
 }
 
@@ -310,7 +315,7 @@ void Change_To_Screen(SCREEN_PTR scrPtr)
   * @param  None
   * @retval None
   */
-void Wavy_SCREEN()
+void Wavy_SCREEN(uint8_t fullrender)
 {
 	const uint16_t nButtons = 1;
 
@@ -326,7 +331,7 @@ void Wavy_SCREEN()
   * @param  None
   * @retval None
   */
-void Manual_SCREEN()
+void Manual_SCREEN(uint8_t fullrender)
 {
 	const uint16_t nButtons = 1;
 
@@ -342,7 +347,7 @@ void Manual_SCREEN()
   * @param  None
   * @retval None
   */
-void Settings_SCREEN()
+void Settings_SCREEN(uint8_t fullrender)
 {
 	const uint16_t nButtons = 4;
 
@@ -376,8 +381,9 @@ void Settings_SCREEN()
   * @param  None
   * @retval None
   */
-void Change_Time_SCREEN()
+void Change_Time_SCREEN(uint8_t fullrender)
 {
+	static uint32_t timeDisplayed = 0;
 	const uint8_t BUTTON_TOP_Y = 5;
 	const uint8_t BUTTON_BOTTOM_Y = 154;
 	const uint8_t BUTTON_SIZE = 64;
@@ -393,42 +399,46 @@ void Change_Time_SCREEN()
 	/* Compute seconds */
 	TSS = (TimeVar % 3600) % 60;
 
-	if (ButtonWidget(GEN_ID,20,230,200,50,"OK"))
+	if (ButtonWidget(GEN_ID,20,230,200,50,"OK",fullrender))
 	{
 		Change_To_Screen(Settings_SCREEN);
 		return;
 	}
 
 	// + hour
-	if (ButtonWidget(GEN_ID,10,BUTTON_TOP_Y,BUTTON_SIZE,BUTTON_SIZE,"+H"))
+	if (ButtonWidget(GEN_ID,10,BUTTON_TOP_Y,BUTTON_SIZE,BUTTON_SIZE,"+H",fullrender))
 		Time_Adjust(TimeVar+3600);
 
 	// - hour
-	if (ButtonWidget(GEN_ID,10,BUTTON_BOTTOM_Y,BUTTON_SIZE,BUTTON_SIZE,"-H"))
+	if (ButtonWidget(GEN_ID,10,BUTTON_BOTTOM_Y,BUTTON_SIZE,BUTTON_SIZE,"-H",fullrender))
 		Time_Adjust(TimeVar-3600);
 
 	// + min
-	if (ButtonWidget(GEN_ID,85,BUTTON_TOP_Y,BUTTON_SIZE,BUTTON_SIZE,"+M"))
+	if (ButtonWidget(GEN_ID,85,BUTTON_TOP_Y,BUTTON_SIZE,BUTTON_SIZE,"+M",fullrender))
 		Time_Adjust(TimeVar+60);
 
 	// - min
-	if (ButtonWidget(GEN_ID,85,BUTTON_BOTTOM_Y,BUTTON_SIZE,BUTTON_SIZE,"-M"))
+	if (ButtonWidget(GEN_ID,85,BUTTON_BOTTOM_Y,BUTTON_SIZE,BUTTON_SIZE,"-M",fullrender))
 		Time_Adjust(TimeVar-60);
 
 	// + sec
-	if (ButtonWidget(GEN_ID,160,BUTTON_TOP_Y,BUTTON_SIZE,BUTTON_SIZE,"+S"))
+	if (ButtonWidget(GEN_ID,160,BUTTON_TOP_Y,BUTTON_SIZE,BUTTON_SIZE,"+S",fullrender))
 		Time_Adjust(TimeVar+1);
 
 	// - sec
-	if (ButtonWidget(GEN_ID,160,BUTTON_BOTTOM_Y,BUTTON_SIZE,BUTTON_SIZE,"-S"))
+	if (ButtonWidget(GEN_ID,160,BUTTON_BOTTOM_Y,BUTTON_SIZE,BUTTON_SIZE,"-S",fullrender))
 		Time_Adjust(TimeVar-1);
 
 	POINT_COLOR = GREEN;
 	BACK_COLOR = BLACK;
 
-	LCD_ShowNumBig(10,80,THH,2,4);
-	LCD_ShowNumBig(85,80,TMM,2,4);
-	LCD_ShowNumBig(160,80,TSS,2,4);
+	if (timeDisplayed != TimeVar)
+	{
+		LCD_ShowNumBig(10,80,THH,2,4);
+		LCD_ShowNumBig(85,80,TMM,2,4);
+		LCD_ShowNumBig(160,80,TSS,2,4);
+		timeDisplayed = TimeVar;
+	}
 }
 
 
@@ -437,21 +447,20 @@ void Change_Time_SCREEN()
   * @param  None
   * @retval None
   */
-void Test_SCREEN()
+void Test_SCREEN(uint8_t fullrender)
 {
 	uint16_t brightness = 0;
 
-	POINT_COLOR=BLUE;
-	BACK_COLOR =WHITE;
-	WriteString(20,40,"Touch here for brightness",RED);
-	WriteString(20,280," or here for dull days",RED);
+	if (fullrender)
+	{
+		POINT_COLOR=BLUE;
+		BACK_COLOR =WHITE;
+		WriteString(20,40,"Touch here for brightness",RED);
+		WriteString(20,280," or here for dull days",RED);
 
-	WriteString(50,135,"KEY1=Calibrate screen",BLUE);
-	WriteString(50,155,"KEY2=Main menu",BLUE);
-
-	LCD_ShowNumBig(0,0,9876,4,4);
-
-
+		WriteString(50,135,"KEY1=Calibrate screen",BLUE);
+		WriteString(50,155,"KEY2=Main menu",BLUE);
+	}
 
 	/* draw on the LCD like a pencil */
 	Draw_Big_Point(Pen_Point.X0,Pen_Point.Y0);
@@ -463,7 +472,7 @@ void Test_SCREEN()
 	Set_Sun_Brightness(brightness);
 	Set_Moon_Brightness(MAX_SUN_MOON_BRIGHTNESS - brightness);
 
-	if (ButtonWidget(GEN_ID,20,210,100,50,"Main Menu"))
+	if (ButtonWidget(GEN_ID,20,210,100,50,"Main Menu",fullrender))
 		Change_To_Screen(Main_Menu_SCREEN);
 }
 
@@ -472,7 +481,7 @@ void Test_SCREEN()
   * @param  None
   * @retval None
   */
-void Main_Menu_SCREEN()
+void Main_Menu_SCREEN(uint8_t fullrender)
 {
 	const uint16_t nButtons = 3;
 
@@ -495,15 +504,99 @@ void Main_Menu_SCREEN()
 	}
 }
 
-void Config_Sun_SCREEN()
+void Config_Sun_SCREEN(uint8_t fullrender)
 {
-	if (ButtonWidget(GEN_ID,20,210,100,50,"OK"))
+	const uint8_t BUTTON_TOP_Y = 200;
+	const uint8_t BUTTON_BOTTOM_Y = 230;
+	const uint8_t BUTTON_SIZE = 24;
+
+	const double FIVEMINS_PER_DAY = 288.0;
+	static double freq = 47.0;
+	static double amp = 71;
+	static double phase = 11;
+
+
+	double x,y;
+	uint16_t w,h,m,indent;
+	indent=m=5;
+	h=180;
+	w=LCD_W-m-m;
+
+	const double xScale = (w-indent)/FIVEMINS_PER_DAY;
+
+	// + freq
+	if (ButtonWidget(GEN_ID,10,BUTTON_TOP_Y,50,BUTTON_SIZE,"+Hz",fullrender))
+	{
+		fullrender=1;
+		freq++;
+	}
+
+	// - freq
+	if (ButtonWidget(GEN_ID,10,BUTTON_BOTTOM_Y,50,BUTTON_SIZE,"-Hz",fullrender))
+	{
+		fullrender=1;
+		freq--;
+	}
+
+	// + Amplitude
+	if (ButtonWidget(GEN_ID,85,BUTTON_TOP_Y,70,BUTTON_SIZE,"+Amp",fullrender) && amp<85)
+	{
+		fullrender=1;
+		amp++;
+	}
+
+	// - Amplitude
+	if (ButtonWidget(GEN_ID,85,BUTTON_BOTTOM_Y,70,BUTTON_SIZE,"-Amp",fullrender) && amp>0)
+	{
+		fullrender=1;
+		amp--;
+	}
+
+	// + Phase
+	if (ButtonWidget(GEN_ID,160,BUTTON_TOP_Y,70,BUTTON_SIZE,"+Phase",fullrender))
+	{
+		fullrender=1;
+		phase+=0.1;
+	}
+
+	// - Phase
+	if (ButtonWidget(GEN_ID,160,BUTTON_BOTTOM_Y,70,BUTTON_SIZE,"-Phase",fullrender))
+	{
+		fullrender=1;
+		phase-=0.1;
+	}
+
+	// return
+	if (ButtonWidget(GEN_ID,30,270,180,24,"OK",fullrender))
+	{
 		Change_To_Screen(Settings_SCREEN);
+		return;
+	}
+
+	if (fullrender)
+	{
+		DrawRect(m, m, w, h, BLACK);
+
+		DrawLine(m+indent, m, m+indent, h+m, WHITE); // y axis
+		DrawLine(m, h-m, w+m, h-m, WHITE); // x axis
+
+		uint16_t current5MinPeriod = RTC_GetCounter() / (5*60);
+		DrawLine(m+indent+(current5MinPeriod*xScale), m, m+indent+(current5MinPeriod*xScale), h+m, RED); // current time
+
+		/* plot graph */
+		for (x=0; x<FIVEMINS_PER_DAY; x++)
+		{
+			y = (sin(phase + (x/freq))*amp)+amp;
+			DrawPoint(m+indent+(x*xScale),h+m-indent-indent-y,GREEN);
+		}
+	}
+
+
 }
 
-void Config_Moon_SCREEN()
+void Config_Moon_SCREEN(uint8_t fullrender)
 {
-	if (ButtonWidget(GEN_ID,20,210,100,50,"OK"))
+	if (ButtonWidget(GEN_ID,20,210,100,50,"OK",fullrender))
 		Change_To_Screen(Settings_SCREEN);
 }
 
