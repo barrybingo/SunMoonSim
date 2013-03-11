@@ -219,7 +219,6 @@ void EXTI15_10_IRQHandler(void)
 	{
     	EXTI_ClearITPendingBit(EXTI_IMR_MR13);
 
-        LEDToggle(LED2);
 		for(i=1000;i>0;i--);
 		Pen_Point.Key_Sta=Key_Down;
 	}

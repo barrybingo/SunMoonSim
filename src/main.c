@@ -193,7 +193,7 @@ int main(void) {
 		/* is screen being touched? */
 		if(Pen_Point.Key_Sta==Key_Down)
 		{
-			//LEDOn(LED2);
+			LEDOn(LED2);
 			Pen_Int_Set(0); // turn interrupt off
 			do
 			{
@@ -211,7 +211,7 @@ int main(void) {
 			}while(PEN==0);
 
 			Pen_Int_Set(1); // turn interrupt back on
-			//LEDOff(LED2);
+			LEDOff(LED2);
 		}
 		else
 		{
