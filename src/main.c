@@ -29,6 +29,8 @@
 /* RTC -------------------------------------------------------------------------------*/
 //#define RTCClockOutput_Enable  /* RTC Clock/64 is output on tamper pin(PC.13) */
 __IO uint32_t TimeDisplay = 0;
+uint32_t GlobalTime = 0;  // Seconds passed in this day since midnight
+#define  RefreshGlobalTime() GlobalTime = RTC_GetCounter() % 0x00015180;
 
 /* GUI typedefs, local globals and defines-------------------------------------------------*/
 typedef void(*SCREEN_PTR)(uint8_t);
@@ -67,7 +69,8 @@ void Test_SCREEN(uint8_t fullrender);
 void NVIC_Configuration_RTC(void);
 void RTC_Configuration(void);
 void Time_Adjust(uint32_t newTime);
-void Time_Display(uint32_t TimeVar);
+void Time_Display();
+
 
 /**
  * @brief  Main program.
@@ -173,9 +176,11 @@ int main(void) {
 	    /* If 1s has been elapsed */
 	    if (TimeDisplay == 1)
 	    {
-	      /* Display current time */
-	      Time_Display(RTC_GetCounter());
-	      TimeDisplay = 0;
+	    	RefreshGlobalTime();
+
+			/* Display current time */
+			Time_Display();
+			TimeDisplay = 0;
 	    }
 
 		/* check on board button states */
@@ -302,7 +307,7 @@ void Render_Current_Screen()
 void Change_To_Screen(SCREEN_PTR scrPtr)
 {
 	LCD_WriteBMPx2(0, 0, 160,120, background120x160_bmp);
-	Time_Display(RTC_GetCounter());
+	Time_Display();
 	Imgui_Prepare();
 	scrPtr(1);
 	Imgui_Finish();
@@ -383,21 +388,37 @@ void Settings_SCREEN(uint8_t fullrender)
   */
 void Change_Time_SCREEN(uint8_t fullrender)
 {
+	/* time */
 	static uint32_t timeDisplayed = 0;
+	uint32_t THH = 0, TMM = 0, TSS = 0;
+
+	/* buttons */
 	const uint8_t BUTTON_TOP_Y = 5;
 	const uint8_t BUTTON_BOTTOM_Y = 154;
 	const uint8_t BUTTON_SIZE = 64;
 
-
-	uint32_t THH = 0, TMM = 0, TSS = 0;
-	uint32_t TimeVar = RTC_GetCounter();
-
 	/* Compute  hours */
-	THH = TimeVar / 3600;
+	THH = GlobalTime / 3600;
 	/* Compute minutes */
-	TMM = (TimeVar % 3600) / 60;
+	TMM = (GlobalTime % 3600) / 60;
 	/* Compute seconds */
-	TSS = (TimeVar % 3600) % 60;
+	TSS = (GlobalTime % 3600) % 60;
+
+	POINT_COLOR = GREEN;
+	BACK_COLOR = BLACK;
+
+	if (timeDisplayed != GlobalTime)
+	{
+		LCD_ShowNumBig(10,80,THH,2,4);
+		LCD_ShowNumBig(85,80,TMM,2,4);
+		if (TMM<10)
+			LCD_ShowCharBig(85,80,'0',4,1);
+		LCD_ShowNumBig(160,80,TSS,2,4);
+		if (TSS<10)
+			LCD_ShowCharBig(160,80,'0',4,1);
+		timeDisplayed = GlobalTime;
+	}
+
 
 	if (ButtonWidget(GEN_ID,20,230,200,50,"OK",fullrender))
 	{
@@ -407,38 +428,27 @@ void Change_Time_SCREEN(uint8_t fullrender)
 
 	// + hour
 	if (ButtonWidget(GEN_ID,10,BUTTON_TOP_Y,BUTTON_SIZE,BUTTON_SIZE,"+H",fullrender))
-		Time_Adjust(TimeVar+3600);
+		Time_Adjust(GlobalTime+3599);
 
 	// - hour
 	if (ButtonWidget(GEN_ID,10,BUTTON_BOTTOM_Y,BUTTON_SIZE,BUTTON_SIZE,"-H",fullrender))
-		Time_Adjust(TimeVar-3600);
+		Time_Adjust(GlobalTime-3601);
 
 	// + min
 	if (ButtonWidget(GEN_ID,85,BUTTON_TOP_Y,BUTTON_SIZE,BUTTON_SIZE,"+M",fullrender))
-		Time_Adjust(TimeVar+60);
+		Time_Adjust(GlobalTime+59);
 
 	// - min
 	if (ButtonWidget(GEN_ID,85,BUTTON_BOTTOM_Y,BUTTON_SIZE,BUTTON_SIZE,"-M",fullrender))
-		Time_Adjust(TimeVar-60);
+		Time_Adjust(GlobalTime-61);
 
 	// + sec
 	if (ButtonWidget(GEN_ID,160,BUTTON_TOP_Y,BUTTON_SIZE,BUTTON_SIZE,"+S",fullrender))
-		Time_Adjust(TimeVar+1);
+		Time_Adjust(GlobalTime+1);
 
 	// - sec
 	if (ButtonWidget(GEN_ID,160,BUTTON_BOTTOM_Y,BUTTON_SIZE,BUTTON_SIZE,"-S",fullrender))
-		Time_Adjust(TimeVar-1);
-
-	POINT_COLOR = GREEN;
-	BACK_COLOR = BLACK;
-
-	if (timeDisplayed != TimeVar)
-	{
-		LCD_ShowNumBig(10,80,THH,2,4);
-		LCD_ShowNumBig(85,80,TMM,2,4);
-		LCD_ShowNumBig(160,80,TSS,2,4);
-		timeDisplayed = TimeVar;
-	}
+		Time_Adjust(GlobalTime-2);
 }
 
 
@@ -580,7 +590,7 @@ void Config_Sun_SCREEN(uint8_t fullrender)
 		DrawLine(m+indent, m, m+indent, h+m, WHITE); // y axis
 		DrawLine(m, h-m, w+m, h-m, WHITE); // x axis
 
-		uint16_t current5MinPeriod = RTC_GetCounter() / (5*60);
+		uint16_t current5MinPeriod = GlobalTime / (5*60);
 		DrawLine(m+indent+(current5MinPeriod*xScale), m, m+indent+(current5MinPeriod*xScale), h+m, RED); // current time
 
 		/* plot graph */
@@ -674,6 +684,10 @@ void RTC_Configuration(void)
   */
 void Time_Adjust(uint32_t newTime)
 {
+	/* is the time negative */
+	if (newTime & 80000000)
+		newTime = 0x00015180 + newTime - 0xFFFFFFFF;
+
     /* Enable PWR and BKP clocks */
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR | RCC_APB1Periph_BKP, ENABLE);
 
@@ -691,6 +705,7 @@ void Time_Adjust(uint32_t newTime)
 
     BKP_WriteBackupRegister(BKP_DR1, 0xA5A5);
 
+    RefreshGlobalTime();
 }
 
 /**
@@ -698,23 +713,16 @@ void Time_Adjust(uint32_t newTime)
   * @param  TimeVar: RTC counter value.
   * @retval None
   */
-void Time_Display(uint32_t TimeVar) {
+void Time_Display() {
 	unsigned char buff[10];
 	uint32_t THH = 0, TMM = 0, TSS = 0;
 
-	/* Reset RTC Counter when Time is 23:59:59 */
-	if (RTC_GetCounter() == 0x0001517F) {
-		RTC_SetCounter(0x0);
-		/* Wait until last write operation on RTC registers has finished */
-		RTC_WaitForLastTask();
-	}
-
 	/* Compute  hours */
-	THH = TimeVar / 3600;
+	THH = GlobalTime / 3600;
 	/* Compute minutes */
-	TMM = (TimeVar % 3600) / 60;
+	TMM = (GlobalTime % 3600) / 60;
 	/* Compute seconds */
-	TSS = (TimeVar % 3600) % 60;
+	TSS = (GlobalTime % 3600) % 60;
 
 
 	DrawRect(0, LCD_H-20, LCD_W, 20, BLACK);
