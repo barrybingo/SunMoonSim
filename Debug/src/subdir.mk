@@ -11,8 +11,7 @@ C_SRCS += \
 ../src/main.c \
 ../src/newlib_stubs.c \
 ../src/pwm.c \
-../src/stm32f10x_it.c \
-../src/sun_moon.c 
+../src/stm32f10x_it.c 
 
 S_UPPER_SRCS += \
 ../src/startup_stm32f10x_md.S 
@@ -26,8 +25,7 @@ OBJS += \
 ./src/newlib_stubs.o \
 ./src/pwm.o \
 ./src/startup_stm32f10x_md.o \
-./src/stm32f10x_it.o \
-./src/sun_moon.o 
+./src/stm32f10x_it.o 
 
 C_DEPS += \
 ./src/gui.d \
@@ -37,8 +35,7 @@ C_DEPS += \
 ./src/main.d \
 ./src/newlib_stubs.d \
 ./src/pwm.d \
-./src/stm32f10x_it.d \
-./src/sun_moon.d 
+./src/stm32f10x_it.d 
 
 S_UPPER_DEPS += \
 ./src/startup_stm32f10x_md.d 

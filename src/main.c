@@ -12,18 +12,25 @@
 #include "stm32f10x_it.h"
 #include "led.h"
 #include "key.h"
+#include "pwm.h"
 #include "gui_button.h"
-#include "sun_moon.h"
 #include "ili932x.h"
 #include "touch.h"
 #include "hardware.h"
 #include "Bitmaps/background120x160.c"
 
-#define VERSION_TEXT "Orange-Test 0.1"
+#define VERSION_TEXT "Orange-Test 0.3"
 
 /* some basic compiler checks ---------------------------------------*/
 #if !defined (USE_STDPERIPH_DRIVER)  || !defined (STM32F10X_MD)
  #error "USE_STDPERIPH_DRIVER and STM32F10X_MD need to be compiler preprocessor defines"
+#endif
+
+#ifndef max
+#define max(a,b)    (((a) > (b)) ? (a) : (b))
+#endif
+#ifndef min
+#define min(a,b)    (((a) < (b)) ? (a) : (b))
 #endif
 
 /* RTC -------------------------------------------------------------------------------*/
@@ -46,6 +53,25 @@ SCREEN_PTR currentScreenPtr;
 
 #define ShowButton(x,str) ButtonWidget(GEN_ID, gui_h_margin, GUI_V_POS(x), gui_button_width, gui_button_height, str, fullrender)
 
+/* Sun Moon */
+#define MAX_DIMNESS  160  // most LEDs knock out at 100
+#define FIVEMINS_PER_DAY 288
+
+typedef struct
+{
+	/* Light intensity function parameters */
+	uint16_t freq;
+	uint16_t amp;
+	int16_t shift;
+	float phase;
+
+	/* Output */
+	PWM_Output PWM;
+
+} MOVING_LIGHT_SOURCE;
+
+MOVING_LIGHT_SOURCE Sun, Moon;
+
 
 /* function prototypes ----------------------------------------------*/
 void NVIC_Configuration_TouchScreenPen(void);
@@ -63,7 +89,8 @@ void Settings_SCREEN(uint8_t fullrender);
 void Config_Sun_SCREEN(uint8_t fullrender);
 void Config_Moon_SCREEN(uint8_t fullrender);
 void Change_Time_SCREEN(uint8_t fullrender);
-void Test_SCREEN(uint8_t fullrender);
+
+void Config_MLS_SCREEN(uint8_t fullrender, uint8_t bSun);
 
 /* RTC control */
 void NVIC_Configuration_RTC(void);
@@ -71,6 +98,10 @@ void RTC_Configuration(void);
 void Time_Adjust(uint32_t newTime);
 void Time_Display();
 
+/* Sun and Moon dimmers */
+void Sun_Moon_Dimmers_Init(void);
+uint16_t Get_DimmerValueBasedOnTime(MOVING_LIGHT_SOURCE* mls, uint32_t time);
+void SetAllDimmersBasedOnTime(uint32_t time);
 
 /**
  * @brief  Main program.
@@ -157,7 +188,7 @@ int main(void) {
 	LCD_Clear(BLACK);
 
 	/* GUI */
-	Change_To_Screen(Config_Sun_SCREEN); //Main_Menu_SCREEN);
+	Change_To_Screen(Main_Menu_SCREEN);
 
 	/* on board key buttons */
 	KeyInit(KEY1);
@@ -168,7 +199,7 @@ int main(void) {
 	LEDInit(LED2);
 
 	/* the stellar bodies */
-	Sun_Moon_Init();
+	Sun_Moon_Dimmers_Init();
 
 	/* Infinite loop */
 	while (1)
@@ -417,6 +448,8 @@ void Change_Time_SCREEN(uint8_t fullrender)
 		if (TSS<10)
 			LCD_ShowCharBig(160,80,'0',4,1);
 		timeDisplayed = GlobalTime;
+
+		SetAllDimmersBasedOnTime(GlobalTime);
 	}
 
 
@@ -453,40 +486,6 @@ void Change_Time_SCREEN(uint8_t fullrender)
 
 
 /**
-  * @brief  Testing screen with various diagnostic info displayed
-  * @param  None
-  * @retval None
-  */
-void Test_SCREEN(uint8_t fullrender)
-{
-	uint16_t brightness = 0;
-
-	if (fullrender)
-	{
-		POINT_COLOR=BLUE;
-		BACK_COLOR =WHITE;
-		WriteString(20,40,"Touch here for brightness",RED);
-		WriteString(20,280," or here for dull days",RED);
-
-		WriteString(50,135,"KEY1=Calibrate screen",BLUE);
-		WriteString(50,155,"KEY2=Main menu",BLUE);
-	}
-
-	/* draw on the LCD like a pencil */
-	Draw_Big_Point(Pen_Point.X0,Pen_Point.Y0);
-
-	/* shine the sun and moon */
-	brightness = (Pen_Point.Y0 / (float)LCD_H) * (float)MAX_SUN_MOON_BRIGHTNESS;
-	LCD_ShowNum(100,10,brightness,5,16);
-
-	Set_Sun_Brightness(brightness);
-	Set_Moon_Brightness(MAX_SUN_MOON_BRIGHTNESS - brightness);
-
-	if (ButtonWidget(GEN_ID,20,210,100,50,"Main Menu",fullrender))
-		Change_To_Screen(Main_Menu_SCREEN);
-}
-
-/**
   * @brief  Main menu screen
   * @param  None
   * @retval None
@@ -512,68 +511,101 @@ void Main_Menu_SCREEN(uint8_t fullrender)
 		Change_To_Screen(Settings_SCREEN);
 		return;
 	}
+
+	/* update Sun and Moon on screen entry and every 10 seconds there after */
+	if (fullrender || (GlobalTime%10 == 0))
+		SetAllDimmersBasedOnTime(GlobalTime);
 }
 
 void Config_Sun_SCREEN(uint8_t fullrender)
 {
+	Config_MLS_SCREEN(fullrender, 1);
+}
+
+void Config_Moon_SCREEN(uint8_t fullrender)
+{
+	Config_MLS_SCREEN(fullrender, 0);
+}
+
+/**
+  * @brief  Modify dimmer function parameters for the Sun or Moon
+  * @param  fullrender: non zero to fully redraw of screen
+  *         bSun: non zero if sun, moon otherwise
+  * @retval None
+  */
+void Config_MLS_SCREEN(uint8_t fullrender, uint8_t bSun)
+{
+	static uint32_t scrollingX = 0;
+
 	const uint8_t BUTTON_TOP_Y = 200;
 	const uint8_t BUTTON_BOTTOM_Y = 230;
 	const uint8_t BUTTON_SIZE = 24;
 
-	const double FIVEMINS_PER_DAY = 288.0;
-	static double freq = 47.0;
-	static double amp = 71;
-	static double phase = 11;
+	const uint16_t indent=5;
+	const uint16_t m=5;
+	const uint16_t h=180;
+	const uint16_t w=LCD_W-m-m;
+	const float xScale = (float)(w-indent)/(float)FIVEMINS_PER_DAY;
 
+	uint16_t x,y;
 
-	double x,y;
-	uint16_t w,h,m,indent;
-	indent=m=5;
-	h=180;
-	w=LCD_W-m-m;
-
-	const double xScale = (w-indent)/FIVEMINS_PER_DAY;
+	MOVING_LIGHT_SOURCE* lightSource = bSun ? &Sun : &Moon;
+	MOVING_LIGHT_SOURCE* otherLightSource = bSun ? &Moon : &Sun;
 
 	// + freq
-	if (ButtonWidget(GEN_ID,10,BUTTON_TOP_Y,50,BUTTON_SIZE,"+Hz",fullrender))
+	if (ButtonWidget(GEN_ID,5,BUTTON_TOP_Y,40,BUTTON_SIZE,"+Hz",fullrender))
 	{
 		fullrender=1;
-		freq++;
+		lightSource->freq--;
 	}
 
 	// - freq
-	if (ButtonWidget(GEN_ID,10,BUTTON_BOTTOM_Y,50,BUTTON_SIZE,"-Hz",fullrender))
+	if (ButtonWidget(GEN_ID,5,BUTTON_BOTTOM_Y,40,BUTTON_SIZE,"-Hz",fullrender))
 	{
 		fullrender=1;
-		freq--;
+		lightSource->freq++;
 	}
 
 	// + Amplitude
-	if (ButtonWidget(GEN_ID,85,BUTTON_TOP_Y,70,BUTTON_SIZE,"+Amp",fullrender) && amp<85)
+	if (ButtonWidget(GEN_ID,50,BUTTON_TOP_Y,45,BUTTON_SIZE,"+Amp",fullrender))
 	{
 		fullrender=1;
-		amp++;
+		lightSource->amp+=2;
 	}
 
 	// - Amplitude
-	if (ButtonWidget(GEN_ID,85,BUTTON_BOTTOM_Y,70,BUTTON_SIZE,"-Amp",fullrender) && amp>0)
+	if (ButtonWidget(GEN_ID,50,BUTTON_BOTTOM_Y,45,BUTTON_SIZE,"-Amp",fullrender) && lightSource->amp>0)
 	{
 		fullrender=1;
-		amp--;
+		lightSource->amp-=2;
 	}
 
 	// + Phase
-	if (ButtonWidget(GEN_ID,160,BUTTON_TOP_Y,70,BUTTON_SIZE,"+Phase",fullrender))
+	if (ButtonWidget(GEN_ID,100,BUTTON_TOP_Y,60,BUTTON_SIZE,"+Phase",fullrender))
 	{
 		fullrender=1;
-		phase+=0.1;
+		lightSource->phase-=0.1;
 	}
 
 	// - Phase
-	if (ButtonWidget(GEN_ID,160,BUTTON_BOTTOM_Y,70,BUTTON_SIZE,"-Phase",fullrender))
+	if (ButtonWidget(GEN_ID,100,BUTTON_BOTTOM_Y,60,BUTTON_SIZE,"-Phase",fullrender))
 	{
 		fullrender=1;
-		phase-=0.1;
+		lightSource->phase+=0.1;
+	}
+
+	// + ShiftY
+	if (ButtonWidget(GEN_ID,165,BUTTON_TOP_Y,60,BUTTON_SIZE,"+Shift",fullrender))
+	{
+		fullrender=1;
+		lightSource->shift+=2;
+	}
+
+	// - ShiftY
+	if (ButtonWidget(GEN_ID,165,BUTTON_BOTTOM_Y,60,BUTTON_SIZE,"-Shift",fullrender))
+	{
+		fullrender=1;
+		lightSource->shift-=2;
 	}
 
 	// return
@@ -583,6 +615,7 @@ void Config_Sun_SCREEN(uint8_t fullrender)
 		return;
 	}
 
+	/* graph */
 	if (fullrender)
 	{
 		DrawRect(m, m, w, h, BLACK);
@@ -596,19 +629,42 @@ void Config_Sun_SCREEN(uint8_t fullrender)
 		/* plot graph */
 		for (x=0; x<FIVEMINS_PER_DAY; x++)
 		{
-			y = (sin(phase + (x/freq))*amp)+amp;
+			/* bright graph for light source under consideration */
+			y = Get_DimmerValueBasedOnTime(lightSource, (uint32_t)x*300U);
 			DrawPoint(m+indent+(x*xScale),h+m-indent-indent-y,GREEN);
+
+			/* draw darker graph for the other light source */
+			y = Get_DimmerValueBasedOnTime(otherLightSource, (uint32_t)x*300U);
+			DrawPoint(m+indent+(x*xScale),h+m-indent-indent-y,0x2222);
+
 		}
+
+		/* draw some stats */
+		POINT_COLOR = GREEN;
+		LCD_ShowNum(10,10, lightSource->freq,3,16,1);
+		LCD_ShowNum(10,26, lightSource->amp,3,16,1);
+		LCD_ShowNum(10,42, (uint32_t)(lightSource->phase*10),3,16,1);
+		LCD_ShowNum(10,58, lightSource->shift,3,16,1);
+
+		POINT_COLOR = 0x2222;
+		LCD_ShowNum(198,10, otherLightSource->freq,3,16,1);
+		LCD_ShowNum(198,26, otherLightSource->amp,3,16,1);
+		LCD_ShowNum(198,42, (uint32_t)(otherLightSource->phase*10),3,16,1);
+		LCD_ShowNum(198,58, otherLightSource->shift,3,16,1);
 	}
 
-
+	/* live scrolling update */
+	if (fullrender)
+	{
+		scrollingX = 0;
+		DrawRect(m, h, w, 5, BLACK);
+	}
+	DrawRect(m+indent+(scrollingX*xScale),h, 5, 5, BLACK);  // Delete last green rect
+	scrollingX = (scrollingX+1)%(FIVEMINS_PER_DAY-5);
+	DrawRect(m+indent+(scrollingX*xScale),h, 5, 5, GREEN);  // draw new green rect
+	SetAllDimmersBasedOnTime(scrollingX * 300U);
 }
 
-void Config_Moon_SCREEN(uint8_t fullrender)
-{
-	if (ButtonWidget(GEN_ID,20,210,100,50,"OK",fullrender))
-		Change_To_Screen(Settings_SCREEN);
-}
 
 /**
   * @brief  Configures the nested vectored interrupt controller.
@@ -732,7 +788,53 @@ void Time_Display() {
 	WriteString(115, LCD_H-15, VERSION_TEXT, WHITE);
 }
 
+void Sun_Moon_Dimmers_Init(void)
+{
+	// Sun @ PB0/ADC12_IN8/TIM3_CH3/TIM1_CH2N
+	Sun.PWM.GPIO_TIM = TIM3;
+	Sun.PWM.Channel = 3;
+	Sun.PWM.RCC_APB1Periph = RCC_APB1Periph_TIM3;
+	Sun.PWM.RCC_APB2Periph = RCC_APB2Periph_GPIOB;
+	Sun.PWM.GPIO_Pin = GPIO_Pin_0;
+	Sun.PWM.GPIO_PORT = GPIOB;
+	Sun.PWM.TIM_Period = 12000;
 
+	PWM_Init_Output(&Sun.PWM);
+	PWM_Set_Output(&Sun.PWM, 0);
+
+	Sun.freq = 46;
+	Sun.amp = 78;
+	Sun.phase = 10.7;
+	Sun.shift = 29;
+
+	// Moon @ PB1/ADC12_IN9/TIM3_CH4/TIM1_CH3N
+	Moon.PWM.GPIO_TIM = TIM3;
+	Moon.PWM.Channel = 4;
+	Moon.PWM.RCC_APB1Periph = RCC_APB1Periph_TIM3;
+	Moon.PWM.RCC_APB2Periph = RCC_APB2Periph_GPIOB;
+	Moon.PWM.GPIO_Pin = GPIO_Pin_1;
+	Moon.PWM.GPIO_PORT = GPIOB;
+	Moon.PWM.TIM_Period = 12000;
+
+	PWM_Init_Output(&Moon.PWM);
+	PWM_Set_Output(&Moon.PWM, 0);
+
+	Moon.freq = 52;
+	Moon.amp = 54;
+	Moon.phase = 1.9;
+	Moon.shift = 46;
+}
+
+uint16_t Get_DimmerValueBasedOnTime(MOVING_LIGHT_SOURCE* mls, uint32_t time)
+{
+	return  min(MAX_DIMNESS, (uint16_t)( (sinf(mls->phase + ((float)time/FIVEMINS_PER_DAY/mls->freq))*mls->amp) +mls->amp + mls->shift));
+}
+
+void SetAllDimmersBasedOnTime(uint32_t time)
+{
+	PWM_Set_Output(&Sun.PWM, MAX_DIMNESS -(Get_DimmerValueBasedOnTime(&Sun,time)));
+	PWM_Set_Output(&Moon.PWM, MAX_DIMNESS -(Get_DimmerValueBasedOnTime(&Moon,time)));
+}
 
 #ifdef  USE_FULL_ASSERT
 
