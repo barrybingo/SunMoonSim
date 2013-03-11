@@ -590,7 +590,7 @@ void LCD_ShowNumBig(uint8_t x,uint16_t y,u32 num,uint8_t len,uint8_t scale)
 	 	LCD_ShowCharBig(x+(8*scale)*t,y,temp+'0',scale,0);
 	}
 }
-void LCD_ShowNum(uint8_t x,uint16_t y,u32 num,uint8_t len,uint8_t size)
+void LCD_ShowNum(uint8_t x,uint16_t y,u32 num,uint8_t len,uint8_t size, uint8_t mode)
 {         	
 	uint8_t t,temp;
 	uint8_t enshow=0;						   
@@ -601,12 +601,12 @@ void LCD_ShowNum(uint8_t x,uint16_t y,u32 num,uint8_t len,uint8_t size)
 		{
 			if(temp==0)
 			{
-				LCD_ShowChar(x+(size/2)*t,y,' ',size,0);
+				LCD_ShowChar(x+(size/2)*t,y,' ',size,mode);
 				continue;
 			}else enshow=1; 
 		 	 
 		}
-	 	LCD_ShowChar(x+(size/2)*t,y,temp+'0',size,0); 
+	 	LCD_ShowChar(x+(size/2)*t,y,temp+'0',size,mode);
 	}
 }
 /*****************************************************************************
