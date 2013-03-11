@@ -50,7 +50,7 @@ uint8_t ButtonWidget(uint8_t id, uint16_t x, uint16_t y, uint16_t w, uint16_t h,
 
 	if (fullrender)
 		DrawRect(x, y, w, h, bg);
-	DrawString(x + 20, y + (h / 2) - 10, text, WHITE, bg);
+	DrawString(x + 5, y + (h / 2) - 10, text, WHITE, bg);
 
 	// If button is hot and active, but mouse button is not
 	// down, the user must have clicked the button.
