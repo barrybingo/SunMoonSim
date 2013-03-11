@@ -369,9 +369,43 @@ void Wavy_SCREEN(uint8_t fullrender)
   */
 void Manual_SCREEN(uint8_t fullrender)
 {
-	const uint16_t nButtons = 1;
+	uint16_t brightness = 0;
 
-	if (ShowButton(0,"Man ret"))
+	/* Sun on left and moon on the right */
+	if (Pen_Point.Y0<240)
+	{
+		brightness = (Pen_Point.Y0 / (float)240) * (float)MAX_DIMNESS;
+
+		if (Pen_Point.X0>LCD_W/2)
+		{
+			POINT_COLOR = CYAN;
+			PWM_Set_Output(&Moon.PWM, brightness);
+		}
+		else
+		{
+			POINT_COLOR = YELLOW;
+			PWM_Set_Output(&Sun.PWM, brightness);
+		}
+
+		/* draw on the LCD like a pencil */
+		Draw_Big_Point(Pen_Point.X0,Pen_Point.Y0);
+	}
+
+	if (fullrender)
+	{
+		POINT_COLOR = CYAN;
+		LCD_ShowCharBig(10,60,'S', 10, 1);
+		POINT_COLOR = YELLOW;
+		LCD_ShowCharBig(15,65,'S', 10, 1);
+
+		POINT_COLOR = YELLOW;
+		LCD_ShowCharBig(130,60,'M', 10, 1);
+		POINT_COLOR = CYAN;
+		LCD_ShowCharBig(135,65,'M', 10, 1);
+	}
+
+	// return
+	if (ButtonWidget(GEN_ID,30,250,160,40,"Main Menu",fullrender))
 	{
 		Change_To_Screen(Main_Menu_SCREEN);
 		return;
