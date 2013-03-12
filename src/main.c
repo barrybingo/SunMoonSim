@@ -521,7 +521,7 @@ void Manual_SCREEN(uint8_t fullrender)
 	uint16_t brightness = 0;
 
 	/* Sun on left and moon on the right */
-	if (Pen_Point.Y0<240)
+	if (Pen_Point.Y0<=240)
 	{
 		brightness = (Pen_Point.Y0 / (float)240) * (float)MAX_DIMNESS;
 
