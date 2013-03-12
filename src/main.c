@@ -39,6 +39,11 @@ __IO uint32_t TimeDisplay = 0;
 uint32_t GlobalTime = 0;  // Seconds passed in this day since midnight
 #define  RefreshGlobalTime() GlobalTime = RTC_GetCounter() % 0x00015180;
 
+/* backlight control */
+#define BACKLIGHT_STAY_ON_TIME    240000U /* milliseconds that backlight remains on after touch input */
+#define BACKLIGHT_STARTUP_DELAY   400U    /* milliseconds after backlight turned on that touch inputs are accepted */
+uint8_t  backLightIsOn = 1; // 1 on, 0 off
+
 /* GUI typedefs, local globals and defines-------------------------------------------------*/
 typedef void(*SCREEN_PTR)(uint8_t);
 SCREEN_PTR currentScreenPtr;
@@ -77,6 +82,11 @@ MOVING_LIGHT_SOURCE Sun, Moon;
 void NVIC_Configuration_TouchScreenPen(void);
 uint8_t KEY_Scan(void);
 
+/* backlight control */
+void BacklightInit();
+void BacklightOn();
+void BacklightOff();
+
 /* GUI control */
 void Render_Current_Screen();
 void Change_To_Screen(SCREEN_PTR scrPtr);
@@ -111,6 +121,7 @@ void SetAllDimmersBasedOnTime(uint32_t time);
 int main(void) {
 	/* local variables */
 	uint8_t keyscan = 0;
+	uint32_t lastUserInteractionTime = 0;
 
 	/* set clocks ticking correctly */
 	SystemInit();	   		//72MHzclock, PLL and Flash configuration
@@ -186,9 +197,7 @@ int main(void) {
 	/* init LCD */
 	LCD_Init();
 	LCD_Clear(BLACK);
-
-	/* GUI */
-	Change_To_Screen(Main_Menu_SCREEN);
+	BacklightInit();
 
 	/* on board key buttons */
 	KeyInit(KEY1);
@@ -201,9 +210,18 @@ int main(void) {
 	/* the stellar bodies */
 	Sun_Moon_Dimmers_Init();
 
+	/* GUI */
+	Change_To_Screen(Main_Menu_SCREEN);
+
 	/* Infinite loop */
 	while (1)
 	{
+		/* backlight control */
+		if (backLightIsOn && (lastUserInteractionTime + BACKLIGHT_STAY_ON_TIME < GetMsTicks()) )
+		{
+			BacklightOff();
+		}
+
 	    /* If 1s has been elapsed */
 	    if (TimeDisplay == 1)
 	    {
@@ -218,17 +236,32 @@ int main(void) {
 		keyscan = KEY_Scan();
 		if (keyscan==1)
 		{
+			BacklightOn();
 		    Touch_Adjust();
 		    Change_To_Screen(Main_Menu_SCREEN);
+		    lastUserInteractionTime = GetMsTicks();
 		}
 		else if (keyscan==2)
 		{
+			BacklightOn();
 			Change_To_Screen(Main_Menu_SCREEN);
+			lastUserInteractionTime = GetMsTicks();
 		}
 
 		/* is screen being touched? */
 		if(Pen_Point.Key_Sta==Key_Down)
 		{
+			/* backlight control */
+			if (backLightIsOn==0)
+			{
+				BacklightOn();
+
+				Delay(BACKLIGHT_STARTUP_DELAY);
+				Pen_Point.Key_Sta=Key_Up;
+				lastUserInteractionTime = GetMsTicks();
+				continue;
+			}
+
 			LEDOn(LED2);
 			Pen_Int_Set(0); // turn interrupt off
 			do
@@ -248,6 +281,8 @@ int main(void) {
 
 			Pen_Int_Set(1); // turn interrupt back on
 			LEDOff(LED2);
+
+			lastUserInteractionTime = GetMsTicks();
 		}
 		else
 		{
@@ -319,6 +354,48 @@ uint8_t KEY_Scan(void)
 	else if(KeyState(KEY1)==KEY_RELEASED && KeyState(KEY2)==KEY_RELEASED)
 		NONE_PRESSED=1;
 	return 0;
+}
+
+/**
+  * @brief  Initialise GPIO for LCD backlight LEDs.
+  * @param  None
+  * @retval None
+  */
+void BacklightInit()
+{
+  GPIO_InitTypeDef  GPIO_InitStructure;
+
+  /* Configure the GPIO pin */
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+
+  GPIO_Init(GPIOC, &GPIO_InitStructure);
+
+  /* start with backlight on */
+  GPIOC->BSRR = GPIO_Pin_12;
+}
+
+/**
+  * @brief  Turns LCD backlight LEDs on.
+  * @param  None
+  * @retval None
+  */
+void BacklightOn()
+{
+	GPIOC->BSRR = GPIO_Pin_12;
+	backLightIsOn = 1;
+}
+
+/**
+  * @brief  Turns LCD backlight LEDs off.
+  * @param  None
+  * @retval None
+  */
+void BacklightOff()
+{
+	GPIOC->BRR = GPIO_Pin_12;
+	backLightIsOn = 0;
 }
 
 /**
