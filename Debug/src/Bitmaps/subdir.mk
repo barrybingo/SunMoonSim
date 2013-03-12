@@ -4,13 +4,16 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
-../src/Bitmaps/background120x160.c 
+../src/Bitmaps/background120x160.c \
+../src/Bitmaps/button_skin100x30.c 
 
 OBJS += \
-./src/Bitmaps/background120x160.o 
+./src/Bitmaps/background120x160.o \
+./src/Bitmaps/button_skin100x30.o 
 
 C_DEPS += \
-./src/Bitmaps/background120x160.d 
+./src/Bitmaps/background120x160.d \
+./src/Bitmaps/button_skin100x30.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes
