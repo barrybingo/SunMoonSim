@@ -31,7 +31,8 @@ struct UIState
 extern struct UIState uistate;
 
 void DrawRect(uint16_t x, uint16_t y, uint16_t w, uint16_t h, COLOR color);
-void DrawString(uint16_t x, uint16_t y, uint8_t *pStr, COLOR textColor, COLOR backColor);
+void DrawOutlineRect(uint16_t x, uint16_t y, uint16_t w, uint16_t h, COLOR color);
+void DrawString(uint16_t x, uint16_t y, uint8_t *pStr, COLOR textColor, COLOR backColor, uint8_t transparent);
 void DrawPoint(uint16_t x, uint16_t y, COLOR color);
 void DrawLine(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, COLOR color);
 

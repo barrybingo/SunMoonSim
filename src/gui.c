@@ -26,18 +26,34 @@ void DrawRect(uint16_t x, uint16_t y, uint16_t w, uint16_t h, COLOR color)
 }
 
 /**
+  * @brief  Outline rectangle - no fill
+  * @param  x,y: x and y drawing positions
+  * 		w,h: width and height
+  * 		colour: Pen colour
+  * @retval None
+  */
+void DrawOutlineRect(uint16_t x, uint16_t y, uint16_t w, uint16_t h, COLOR color)
+{
+	DrawLine(x,y,x+w,y,color);
+	DrawLine(x,y+h,x+w,y+h,color);
+	DrawLine(x,y,x,y+h,color);
+	DrawLine(x+w,y,x+w,y+h,color);
+}
+
+/**
   * @brief  Draw text to LCD
   * @param  x,y: x and y drawing positions
   * 		pcStr: text to write
   * 		textColour: text pen colour
-  * 		backColor: backgound pen colour
+  * 		backColor: backgound pen colour - ignored if transparent is non zero
+  * 		transparent: nonzero for transparent background, zero otherwise
   * @retval None
   */
-void DrawString(uint16_t x, uint16_t y, uint8_t *pStr, COLOR textColor, COLOR backColor)
+void DrawString(uint16_t x, uint16_t y, uint8_t *pStr, COLOR textColor, COLOR backColor, uint8_t transparent)
 {
 	uint16_t bc = BACK_COLOR;
 	BACK_COLOR = backColor;
-	WriteString(x, y, pStr, textColor);
+	WriteString(x, y, pStr, textColor, transparent);
 	BACK_COLOR = bc;
 }
 

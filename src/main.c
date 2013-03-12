@@ -44,14 +44,14 @@ typedef void(*SCREEN_PTR)(uint8_t);
 SCREEN_PTR currentScreenPtr;
 
 #define gui_h_margin 20
-#define gui_v_margin 45
-#define gui_button_height 50
+#define gui_v_margin 30
+#define gui_button_height 60
 #define gui_button_width  LCD_W-(2*gui_h_margin)
 
 #define GUI_V_GAP  (LCD_H - (nButtons*gui_button_height) - (gui_v_margin*2)) / (nButtons-1)
 #define GUI_V_POS(n) gui_v_margin+(n*(gui_button_height+GUI_V_GAP))
 
-#define ShowButton(x,str) ButtonWidget(GEN_ID, gui_h_margin, GUI_V_POS(x), gui_button_width, gui_button_height, str, fullrender)
+#define ShowButton(x,str) ButtonWidget(GEN_ID, gui_h_margin, GUI_V_POS(x), gui_button_width, gui_button_height, str, 1, fullrender)
 
 /* Sun Moon */
 #define MAX_DIMNESS  100  // the PWM has only 100 steps
@@ -467,7 +467,7 @@ void Manual_SCREEN(uint8_t fullrender)
 	}
 
 	// return
-	if (ButtonWidget(GEN_ID,30,250,160,40,"Main Menu",fullrender))
+	if (ButtonWidget(GEN_ID,30,250,160,40,"Main Menu",0,fullrender))
 	{
 		Change_To_Screen(Main_Menu_SCREEN);
 		return;
@@ -549,34 +549,34 @@ void Change_Time_SCREEN(uint8_t fullrender)
 	}
 
 
-	if (ButtonWidget(GEN_ID,20,230,200,50,"OK",fullrender))
+	if (ButtonWidget(GEN_ID,20,230,200,50,"OK",0,fullrender))
 	{
 		Change_To_Screen(Settings_SCREEN);
 		return;
 	}
 
 	// + hour
-	if (ButtonWidget(GEN_ID,10,BUTTON_TOP_Y,BUTTON_SIZE,BUTTON_SIZE,"+H",fullrender))
+	if (ButtonWidget(GEN_ID,10,BUTTON_TOP_Y,BUTTON_SIZE,BUTTON_SIZE,"+H",0,fullrender))
 		Time_Adjust(GlobalTime+3599);
 
 	// - hour
-	if (ButtonWidget(GEN_ID,10,BUTTON_BOTTOM_Y,BUTTON_SIZE,BUTTON_SIZE,"-H",fullrender))
+	if (ButtonWidget(GEN_ID,10,BUTTON_BOTTOM_Y,BUTTON_SIZE,BUTTON_SIZE,"-H",0,fullrender))
 		Time_Adjust(GlobalTime-3601);
 
 	// + min
-	if (ButtonWidget(GEN_ID,85,BUTTON_TOP_Y,BUTTON_SIZE,BUTTON_SIZE,"+M",fullrender))
+	if (ButtonWidget(GEN_ID,85,BUTTON_TOP_Y,BUTTON_SIZE,BUTTON_SIZE,"+M",0,fullrender))
 		Time_Adjust(GlobalTime+59);
 
 	// - min
-	if (ButtonWidget(GEN_ID,85,BUTTON_BOTTOM_Y,BUTTON_SIZE,BUTTON_SIZE,"-M",fullrender))
+	if (ButtonWidget(GEN_ID,85,BUTTON_BOTTOM_Y,BUTTON_SIZE,BUTTON_SIZE,"-M",0,fullrender))
 		Time_Adjust(GlobalTime-61);
 
 	// + sec
-	if (ButtonWidget(GEN_ID,160,BUTTON_TOP_Y,BUTTON_SIZE,BUTTON_SIZE,"+S",fullrender))
+	if (ButtonWidget(GEN_ID,160,BUTTON_TOP_Y,BUTTON_SIZE,BUTTON_SIZE,"+S",0,fullrender))
 		Time_Adjust(GlobalTime+1);
 
 	// - sec
-	if (ButtonWidget(GEN_ID,160,BUTTON_BOTTOM_Y,BUTTON_SIZE,BUTTON_SIZE,"-S",fullrender))
+	if (ButtonWidget(GEN_ID,160,BUTTON_BOTTOM_Y,BUTTON_SIZE,BUTTON_SIZE,"-S",0,fullrender))
 		Time_Adjust(GlobalTime-2);
 }
 
@@ -651,63 +651,63 @@ void Config_MLS_SCREEN(uint8_t fullrender, uint8_t bSun)
 	MOVING_LIGHT_SOURCE* otherLightSource = bSun ? &Moon : &Sun;
 
 	// + freq
-	if (ButtonWidget(GEN_ID,5,BUTTON_TOP_Y,40,BUTTON_SIZE,"+Hz",fullrender))
+	if (ButtonWidget(GEN_ID,5,BUTTON_TOP_Y,40,BUTTON_SIZE,"+Hz",0,fullrender))
 	{
 		fullrender=1;
 		lightSource->freq--;
 	}
 
 	// - freq
-	if (ButtonWidget(GEN_ID,5,BUTTON_BOTTOM_Y,40,BUTTON_SIZE,"-Hz",fullrender))
+	if (ButtonWidget(GEN_ID,5,BUTTON_BOTTOM_Y,40,BUTTON_SIZE,"-Hz",0,fullrender))
 	{
 		fullrender=1;
 		lightSource->freq++;
 	}
 
 	// + Amplitude
-	if (ButtonWidget(GEN_ID,50,BUTTON_TOP_Y,45,BUTTON_SIZE,"+Amp",fullrender))
+	if (ButtonWidget(GEN_ID,50,BUTTON_TOP_Y,45,BUTTON_SIZE,"+Amp",0,fullrender))
 	{
 		fullrender=1;
 		lightSource->amp+=2;
 	}
 
 	// - Amplitude
-	if (ButtonWidget(GEN_ID,50,BUTTON_BOTTOM_Y,45,BUTTON_SIZE,"-Amp",fullrender) && lightSource->amp>0)
+	if (ButtonWidget(GEN_ID,50,BUTTON_BOTTOM_Y,45,BUTTON_SIZE,"-Amp",0,fullrender) && lightSource->amp>0)
 	{
 		fullrender=1;
 		lightSource->amp-=2;
 	}
 
 	// + Phase
-	if (ButtonWidget(GEN_ID,100,BUTTON_TOP_Y,60,BUTTON_SIZE,"+Phase",fullrender))
+	if (ButtonWidget(GEN_ID,100,BUTTON_TOP_Y,60,BUTTON_SIZE,"+Phase",0,fullrender))
 	{
 		fullrender=1;
 		lightSource->phase-=0.1;
 	}
 
 	// - Phase
-	if (ButtonWidget(GEN_ID,100,BUTTON_BOTTOM_Y,60,BUTTON_SIZE,"-Phase",fullrender))
+	if (ButtonWidget(GEN_ID,100,BUTTON_BOTTOM_Y,60,BUTTON_SIZE,"-Phase",0,fullrender))
 	{
 		fullrender=1;
 		lightSource->phase+=0.1;
 	}
 
 	// + ShiftY
-	if (ButtonWidget(GEN_ID,165,BUTTON_TOP_Y,60,BUTTON_SIZE,"+Shift",fullrender))
+	if (ButtonWidget(GEN_ID,165,BUTTON_TOP_Y,60,BUTTON_SIZE,"+Shift",0,fullrender))
 	{
 		fullrender=1;
 		lightSource->shift+=2;
 	}
 
 	// - ShiftY
-	if (ButtonWidget(GEN_ID,165,BUTTON_BOTTOM_Y,60,BUTTON_SIZE,"-Shift",fullrender))
+	if (ButtonWidget(GEN_ID,165,BUTTON_BOTTOM_Y,60,BUTTON_SIZE,"-Shift",0,fullrender))
 	{
 		fullrender=1;
 		lightSource->shift-=2;
 	}
 
 	// return
-	if (ButtonWidget(GEN_ID,30,270,180,24,"OK",fullrender))
+	if (ButtonWidget(GEN_ID,30,270,180,24,"OK",0,fullrender))
 	{
 		Change_To_Screen(Settings_SCREEN);
 		return;
@@ -880,10 +880,10 @@ void Time_Display() {
 
 
 	DrawRect(0, LCD_H-20, LCD_W, 20, BLACK);
+	WriteString(115, LCD_H-15, VERSION_TEXT, WHITE, 1);
 	sprintf(buff, "%0.2d:%0.2d:%0.2d", THH, TMM, TSS);
 	BACK_COLOR = BLACK;
-	WriteString(5, LCD_H-15, buff, WHITE);
-	WriteString(115, LCD_H-15, VERSION_TEXT, WHITE);
+	WriteString(5, LCD_H-15, buff, WHITE, 1);
 }
 
 void Sun_Moon_Dimmers_Init(void)
