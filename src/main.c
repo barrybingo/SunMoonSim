@@ -256,6 +256,10 @@ int main(void) {
 
             /* draw GUI */
             Render_Current_Screen();
+
+			/* put touch screen coordinates off the screen so no widget is activated */
+			uistate.mousex = LCD_W+1;
+			uistate.mousey = LCD_H+1;
 		}
 	}
 }
