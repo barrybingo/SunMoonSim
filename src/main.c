@@ -353,13 +353,73 @@ void Change_To_Screen(SCREEN_PTR scrPtr)
   */
 void Wavy_SCREEN(uint8_t fullrender)
 {
-	const uint16_t nButtons = 1;
+	const uint16_t speed_factor = 200;
+	static float moon_speed = 10;
+	static float moon_dimmer = 0;
+	static float moon_dest_dimmer = 0;
 
-	if (ShowButton(0,"Wavy ret"))
+	static float sun_speed = 10;
+	static float sun_dimmer = 0;
+	static float sun_dest_dimmer = 0;
+
+
+	/* pattern */
+	static sun_x, sun_y, sun_c, sun_r = 0;
+	static moon_x, moon_y, moon_c, moon_r = 0;
+
+
+	if (fullrender)
+		srand(GlobalTime);
+
+	if (ScreenClicked(GEN_ID))
 	{
 		Change_To_Screen(Main_Menu_SCREEN);
 		return;
 	}
+
+	/* undulating moon dimmer values */
+	if ((moon_speed > 0 && moon_dimmer > moon_dest_dimmer) ||
+			(moon_speed < 0 && moon_dimmer < moon_dest_dimmer))
+	{
+		moon_speed = (float)(1 + rand() % 10) / speed_factor;
+		moon_dest_dimmer = (float)(rand() % MAX_DIMNESS);
+
+		if (moon_dest_dimmer < moon_dimmer)
+			moon_speed = 0-moon_speed;
+
+		moon_x = rand() % LCD_W;
+		moon_y = rand() % LCD_H;
+		moon_c = rand() % 0xFFFF;
+		moon_r = 0;
+	} else {
+		moon_dimmer += moon_speed;
+
+		POINT_COLOR = moon_c;
+		Draw_Circle(moon_x, moon_y, (uint8_t)(moon_speed*moon_r++));
+	}
+	PWM_Set_Output(&Moon.PWM, moon_dimmer);
+
+	/* undulating sun dimmer values */
+	if ((sun_speed > 0 && sun_dimmer > sun_dest_dimmer) ||
+			(sun_speed < 0 && sun_dimmer < sun_dest_dimmer))
+	{
+		sun_speed = (float)(1 + rand() % 10) / speed_factor;
+		sun_dest_dimmer = (float)(rand() % MAX_DIMNESS);
+
+		if (sun_dest_dimmer < sun_dimmer)
+			sun_speed = 0-sun_speed;
+
+		sun_x = rand() % LCD_W;
+		sun_y = rand() % LCD_H;
+		sun_c = rand() % 0xFFFF;
+		sun_r = 0;
+	} else {
+		sun_dimmer += sun_speed;
+
+		POINT_COLOR = sun_c;
+		Draw_Circle(sun_x, sun_y, (uint8_t)(sun_speed*sun_r++));
+	}
+	PWM_Set_Output(&Sun.PWM, sun_dimmer);
 }
 
 /**
@@ -367,6 +427,8 @@ void Wavy_SCREEN(uint8_t fullrender)
   * @param  None
   * @retval None
   */
+
+
 void Manual_SCREEN(uint8_t fullrender)
 {
 	uint16_t brightness = 0;
