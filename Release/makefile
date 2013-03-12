@@ -8,6 +8,9 @@ RM := rm -rf
 
 # All of the sources participating in the build are defined here
 -include sources.mk
+-include src/touch/subdir.mk
+-include src/LCD/subdir.mk
+-include src/Bitmaps/subdir.mk
 -include src/subdir.mk
 -include STM32F10x_StdPeriph_Driver/src/subdir.mk
 -include CMSIS/CM3/DeviceSupport/ST/STM32F10x/subdir.mk
