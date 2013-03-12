@@ -638,6 +638,7 @@ void Config_Moon_SCREEN(uint8_t fullrender)
 void Config_MLS_SCREEN(uint8_t fullrender, uint8_t bSun)
 {
 	static uint32_t scrollingX = 0;
+	static uint32_t nextRefreshTick = 0;
 
 	const uint8_t BUTTON_TOP_Y = 210;
 	const uint8_t BUTTON_BOTTOM_Y = 239;
@@ -759,14 +760,16 @@ void Config_MLS_SCREEN(uint8_t fullrender, uint8_t bSun)
 
 	/* live scrolling update */
 	if (fullrender)
-	{
-		scrollingX = 0;
 		DrawRect(m, h, w, 5, BLACK);
+
+	if (nextRefreshTick <= GetMsTicks())
+	{
+		nextRefreshTick = GetMsTicks()+50U;
+		DrawRect(m+indent+(scrollingX*xScale),h, 5, 5, BLACK);  // Delete last green rect
+		scrollingX = (scrollingX+1)%(FIVEMINS_PER_DAY-5);
+		DrawRect(m+indent+(scrollingX*xScale),h, 5, 5, GREEN);  // draw new green rect
+		SetAllDimmersBasedOnTime(scrollingX * 300U);
 	}
-	DrawRect(m+indent+(scrollingX*xScale),h, 5, 5, BLACK);  // Delete last green rect
-	scrollingX = (scrollingX+1)%(FIVEMINS_PER_DAY-5);
-	DrawRect(m+indent+(scrollingX*xScale),h, 5, 5, GREEN);  // draw new green rect
-	SetAllDimmersBasedOnTime(scrollingX * 300U);
 }
 
 
