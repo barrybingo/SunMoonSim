@@ -57,7 +57,7 @@ uint8_t ButtonWidget(uint8_t id, uint16_t x, uint16_t y, uint16_t w, uint16_t h,
 		else
 			DrawRect(x, y, w, h, ORANGE);
 
-		DrawString(x + 10, y + (h / 2) - 10, text, bg, WHITE, 1);
+		DrawString(x + 10, y + (h / 2) - 10, text, BLACK, WHITE, 1);
 	}
 
 	/* outline */
