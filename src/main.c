@@ -54,7 +54,7 @@ SCREEN_PTR currentScreenPtr;
 #define ShowButton(x,str) ButtonWidget(GEN_ID, gui_h_margin, GUI_V_POS(x), gui_button_width, gui_button_height, str, fullrender)
 
 /* Sun Moon */
-#define MAX_DIMNESS  160  // most LEDs knock out at 100
+#define MAX_DIMNESS  100  // the PWM has only 100 steps
 #define FIVEMINS_PER_DAY 288
 
 typedef struct
@@ -633,15 +633,17 @@ void Config_MLS_SCREEN(uint8_t fullrender, uint8_t bSun)
 {
 	static uint32_t scrollingX = 0;
 
-	const uint8_t BUTTON_TOP_Y = 200;
-	const uint8_t BUTTON_BOTTOM_Y = 230;
+	const uint8_t BUTTON_TOP_Y = 210;
+	const uint8_t BUTTON_BOTTOM_Y = 239;
 	const uint8_t BUTTON_SIZE = 24;
 
 	const uint16_t indent=5;
 	const uint16_t m=5;
-	const uint16_t h=180;
+	const uint16_t h=200;
 	const uint16_t w=LCD_W-m-m;
+
 	const float xScale = (float)(w-indent)/(float)FIVEMINS_PER_DAY;
+	const float vScale = (float)(h-(3*indent))/(float)MAX_DIMNESS;
 
 	uint16_t x,y;
 
@@ -727,11 +729,11 @@ void Config_MLS_SCREEN(uint8_t fullrender, uint8_t bSun)
 		{
 			/* bright graph for light source under consideration */
 			y = Get_DimmerValueBasedOnTime(lightSource, (uint32_t)x*300U);
-			DrawPoint(m+indent+(x*xScale),h+m-indent-indent-y,GREEN);
+			DrawPoint(m+indent+(x*xScale),h+m-indent-indent-(y*vScale),GREEN);
 
 			/* draw darker graph for the other light source */
 			y = Get_DimmerValueBasedOnTime(otherLightSource, (uint32_t)x*300U);
-			DrawPoint(m+indent+(x*xScale),h+m-indent-indent-y,0x2222);
+			DrawPoint(m+indent+(x*xScale),h+m-indent-indent-(y*vScale),0x2222);
 
 		}
 
@@ -898,10 +900,10 @@ void Sun_Moon_Dimmers_Init(void)
 	PWM_Init_Output(&Sun.PWM);
 	PWM_Set_Output(&Sun.PWM, 0);
 
-	Sun.freq = 46;
-	Sun.amp = 78;
-	Sun.phase = 10.7;
-	Sun.shift = 29;
+	Sun.freq = 48;
+	Sun.amp = 64;
+	Sun.phase = 10.8;
+	Sun.shift = -24;
 
 	// Moon @ PB1/ADC12_IN9/TIM3_CH4/TIM1_CH3N
 	Moon.PWM.GPIO_TIM = TIM3;
@@ -918,7 +920,7 @@ void Sun_Moon_Dimmers_Init(void)
 	Moon.freq = 52;
 	Moon.amp = 54;
 	Moon.phase = 1.9;
-	Moon.shift = 46;
+	Moon.shift = -28;
 }
 
 uint16_t Get_DimmerValueBasedOnTime(MOVING_LIGHT_SOURCE* mls, uint32_t time)
