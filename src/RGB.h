@@ -15,6 +15,7 @@ typedef uint16_t COLOR;
 #define   OLIVE        0x7BE0                    /* ����̣�128, 128, 0          */
 #define   LGRAY        0xC618                    /* �Ұ�ɫ��192, 192, 192        */
 #define   DGRAY        0x7BEF                    /* ���ɫ��128, 128, 128        */
+#define   ORANGE       0xFB20					  /* 255,102,0 */
 #define   BLUE         0x001F                    /* ��ɫ�� 0, 0, 255             */
 #define   GREEN        0x07E0                 	 /* ��ɫ�� 0, 255, 0             */
 #define   CYAN         0x07FF                    /* ��ɫ�� 0, 255, 255           */
