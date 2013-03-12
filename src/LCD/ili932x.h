@@ -148,11 +148,8 @@ void LCD_ShowNumBig(uint8_t x,uint16_t y,uint32_t num,uint8_t len,uint8_t scale)
 void LCD_WriteBMP(uint8_t Xpos, uint16_t Ypos, uint8_t Height, uint16_t Width, uint8_t *bitmap);
 void LCD_WriteBMPx2(uint8_t Xpos, uint16_t Ypos, uint8_t Height, uint16_t Width, uint8_t *bitmap);
 void LCD_Clear(uint16_t Color);
-uint16_t WriteOneASCII(uint8_t *pucMsk,
-                              uint16_t x0,
-                              uint16_t y0,
-                              uint16_t color);
-void WriteString(uint16_t x0, uint16_t y0,uint8_t *pcStr, uint16_t color);
+uint16_t WriteOneASCII(uint8_t *pucMsk, uint16_t x0, uint16_t y0, uint16_t color, uint8_t transparent);
+void WriteString(uint16_t x0, uint16_t y0,uint8_t *pcStr, uint16_t color, uint8_t transparent);
 void LCD_Fill(uint8_t xsta,uint16_t ysta,uint8_t xend,uint16_t yend,uint16_t color);
 #endif
 /****************************** End File ********************************/

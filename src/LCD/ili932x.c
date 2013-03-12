@@ -447,7 +447,7 @@ void LCD_Clear(uint16_t Color)
 ** ��  ����: Dream
 ** �ա�  ��: 2010��12��06��
 *****************************************************************************/   			   
-void WriteString(uint16_t x0, uint16_t y0,uint8_t *pcStr, uint16_t color)
+void WriteString(uint16_t x0, uint16_t y0,uint8_t *pcStr, uint16_t color, uint8_t transparent)
 {
     uint16_t usWidth = 0;
 
@@ -469,7 +469,7 @@ void WriteString(uint16_t x0, uint16_t y0,uint8_t *pcStr, uint16_t color)
 				    y0 = 0;
                 }
             }
-		    usWidth = WriteOneASCII((uint8_t *)&ASCII_1608[('*' - 0x20)][0], x0, y0, color);
+		    usWidth = WriteOneASCII((uint8_t *)&ASCII_1608[('*' - 0x20)][0], x0, y0, color, transparent);
             pcStr += 1;
         }
 		else 
@@ -503,7 +503,7 @@ void WriteString(uint16_t x0, uint16_t y0,uint8_t *pcStr, uint16_t color)
 					    y0 = 0;
                     }
                 }
-                usWidth = WriteOneASCII((uint8_t *)&ASCII_1608[(*pcStr - 0x20)][0], x0, y0, color);
+                usWidth = WriteOneASCII((uint8_t *)&ASCII_1608[(*pcStr - 0x20)][0], x0, y0, color, transparent);
                                                          /* ASCII���21H��ֵ��Ӧ��λ��3��*/
                 pcStr += 1;
             }
@@ -520,7 +520,8 @@ void WriteString(uint16_t x0, uint16_t y0,uint8_t *pcStr, uint16_t color)
 uint16_t WriteOneASCII(uint8_t *pucMsk,
                               uint16_t x0,
                               uint16_t y0,
-                              uint16_t color)
+                              uint16_t color,
+                              uint8_t transparent)
 {
     uint16_t i,j;
     uint16_t y;
@@ -543,8 +544,14 @@ uint16_t WriteOneASCII(uint8_t *pucMsk,
             if((ucChar << j) & 0x80) {                    /* ��ʾ��ģ                     */
                 Write_Dat(color);
             } else {
-                Write_Dat(BACK_COLOR);
-				  //LCD_ReadDat();
+            	if (transparent==0)
+            		Write_Dat(BACK_COLOR);
+            	else
+            	{
+            		/* skip this one */
+                    LCD_SetCursor(x0+j+1, y);
+            		LCD_WriteRAM_Prepare();
+            	}
             }
         }
         y++;
