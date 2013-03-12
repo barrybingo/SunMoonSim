@@ -462,18 +462,18 @@ void Manual_SCREEN(uint8_t fullrender)
 	if (fullrender)
 	{
 		POINT_COLOR = CYAN;
-		LCD_ShowCharBig(10,60,'S', 10, 1);
+		LCD_ShowCharBig(20,60,'S', 10, 1);
 		POINT_COLOR = YELLOW;
-		LCD_ShowCharBig(15,65,'S', 10, 1);
+		LCD_ShowCharBig(25,65,'S', 10, 1);
 
 		POINT_COLOR = YELLOW;
-		LCD_ShowCharBig(130,60,'M', 10, 1);
+		LCD_ShowCharBig(140,60,'M', 10, 1);
 		POINT_COLOR = CYAN;
-		LCD_ShowCharBig(135,65,'M', 10, 1);
+		LCD_ShowCharBig(145,65,'M', 10, 1);
 	}
 
 	// return
-	if (ButtonWidget(GEN_ID,30,250,160,40,"Main Menu",0,fullrender))
+	if (ButtonWidget(GEN_ID,40,250,160,40,"Main Menu",0,fullrender))
 	{
 		Change_To_Screen(Main_Menu_SCREEN);
 		return;
