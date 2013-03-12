@@ -39,4 +39,6 @@ uint8_t RegionHit(uint16_t x, uint16_t y, uint16_t w, uint16_t h);
 void Imgui_Prepare();
 void Imgui_Finish();
 
+uint8_t ScreenClicked(uint8_t id);
+
 #endif

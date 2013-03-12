@@ -94,3 +94,23 @@ void Imgui_Finish() {
 	}
 }
 
+
+/**
+  * @brief  Simple widget return true is screen has been 'clicked'
+  * @param  None
+  * @retval None
+  */
+uint8_t ScreenClicked(uint8_t id)
+{
+	// Check whether the button should be hot
+	if (uistate.activeitem == 0 && uistate.mousedown)
+		uistate.activeitem = id;
+
+	// If screen is hot and active, but mouse button is not
+	// down, the user must have clicked the screen.
+	if (uistate.mousedown == 0 && uistate.activeitem == id)
+		return 1;
+
+	return 0;
+}
+
