@@ -339,6 +339,12 @@ void Change_To_Screen(SCREEN_PTR scrPtr)
 {
 	LCD_WriteBMPx2(0, 0, 160,120, background120x160_bmp);
 	Time_Display();
+
+	/* put touch screen coordinates off the screen so no widget is activated */
+	uistate.mousex = LCD_W+1;
+	uistate.mousey = LCD_H+1;
+
+	/* draw the new screen */
 	Imgui_Prepare();
 	scrPtr(1);
 	Imgui_Finish();
