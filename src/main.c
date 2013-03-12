@@ -537,7 +537,7 @@ void Change_Time_SCREEN(uint8_t fullrender)
 	/* Compute seconds */
 	TSS = (GlobalTime % 3600) % 60;
 
-	POINT_COLOR = GREEN;
+	POINT_COLOR = ORANGE;
 	BACK_COLOR = BLACK;
 
 	if (timeDisplayed != GlobalTime)
