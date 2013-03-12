@@ -24,7 +24,6 @@
  */
 uint8_t ButtonWidget(uint8_t id, uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t* text, uint8_t bitmap, uint8_t fullrender)
 {
-	static COLOR lastbg = 0;
 	COLOR bg;
 
 	// Check whether the button should be hot
@@ -57,22 +56,17 @@ uint8_t ButtonWidget(uint8_t id, uint16_t x, uint16_t y, uint16_t w, uint16_t h,
 			LCD_WriteBMPx2(x, y, 30, 100, button_skin100x30_bmp);
 		else
 			DrawRect(x, y, w, h, ORANGE);
-	}
 
-	if (fullrender || lastbg != bg)
-	{
 		DrawString(x + 10, y + (h / 2) - 10, text, bg, WHITE, 1);
-
-		/* outline */
-		DrawOutlineRect(x,y,w,h,bg);
-		x++;
-		y++;
-		w-=2;
-		h-=2;
-		DrawOutlineRect(x,y,w,h,bg);
-
-		lastbg = bg;
 	}
+
+	/* outline */
+	DrawOutlineRect(x,y,w,h,bg);
+	x++;
+	y++;
+	w-=2;
+	h-=2;
+	DrawOutlineRect(x,y,w,h,bg);
 
 	// If button is hot and active, but mouse button is not
 	// down, the user must have clicked the button.
