@@ -15,7 +15,7 @@
  /* Exported constants --------------------------------------------------------*/
 
 /* number of LED */
-#define NUM_LEDS                             4
+#define NUM_LEDS                             2
 
 /* LED hardware configuration */
 #define LED1_PIN                         GPIO_Pin_2
